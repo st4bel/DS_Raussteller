@@ -16,6 +16,9 @@
 
 var _version = "0.1";
 var _Anleitungslink = "#";
+
+var _config = {"running":"false","abbruchzeit":"6","umbennenung":"---"};
+var _units = ["spear","sword","axe","archer","spy","light","marcher","heavy","ram","catapult","knight","snob"];
 $(function(){
 
     var storage = localStorage;
@@ -30,10 +33,19 @@ $(function(){
     }
     storageSet("auto_run",storageGet("auto_run","false"));
     s = {"0":{"x":598,"y":387}}
-    storageSet("target_list",storageGet("target_list",JSON.stringify(s)))
-    var autoRun = storageGet("auto_run")==="true";
+    storageSet("target_list",storageGet("target_list",JSON.stringify(s)));
+    storageSet("config"storageGet("config",JSON.stringify(_config)));
+
+
+    var autoRun = JSON.parse(storageGet("config")).running==="true";
     init_UI();
-    startRunning();
+
+    if(getPageAttribute("screen")=="overview_villages"&&getPageAttribute("mode")=="incomings"){
+        startRunning();
+    }else if (getPageAttribute("screen")=="place"&&getPageAttribute("raus")=="1") {
+        onPlace();
+    }
+
     function startRunning(){
         var table   = $("#incomings_table");
         var rows 	= $("tr",table).slice(1);
@@ -53,12 +65,13 @@ $(function(){
                 var id = getVillageID(row);
                 var koords = getVillageKoords(row);
                 console.log("id: "+id+", koords: "+JSON.stringify(koords));
-
+                var timestamp = JSON.parse(storageGet("timestamp"));
+                timestamp[id]=0;//TODO
                 koords = nearestTarget(koords);
 
-                var link = "/game.php?village="+id+"&screen=place&x="+koords.x+"&y="+koords.y+"&ts=a";
+                var link = "/game.php?village="+id+"&screen=place&x="+koords.x+"&y="+koords.y+"&raus=1";
                 console.log(link)
-				//window.open(link, '_blank');
+				window.open(link, '_blank');
 
             }else{
                 return; //alle restlichen incoms kommen später an.
@@ -67,6 +80,14 @@ $(function(){
 
 
         })();
+    }
+    function onPlace(){
+        var form = $("#command-data-form");
+        for(var i in _units){
+            $("#unit_input_"+_units[i]).attr("value",$("#units_entry_all_"+_units[i]).text().match(/\w+/)[0]);
+        }
+        //$("#target_attack").click();
+        console.log("click");
     }
     function nearestTarget(koords){
         //returns koords of nearest target
@@ -196,5 +217,12 @@ $(function(){
         }else{
             return "icon friend offline";
         }
+    }
+    function getPageAttribute(attribute){
+        //gibt die php-Attribute zurück, also z.B. von* /game.php?*&screen=report* würde er "report" wiedergeben
+        //return: String
+        var params = document.location.search;
+        var value = params.substring(params.indexOf(attribute+"=")+attribute.length+1,params.indexOf("&",params.indexOf(attribute+"=")) != -1 ? params.indexOf("&",params.indexOf(attribute+"=")) : params.length);
+        return params.indexOf(attribute+"=")!=-1 ? value : "0";
     }
 });
