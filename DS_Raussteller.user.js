@@ -9,6 +9,8 @@
 // @match       https://*.die-staemme.de/game.php?*mode=incomings*
 // @include     https://*.die-staemme.de/game.php?*screen=overview_villages*mode=incomings*
 // @include     https://*.die-staemme.de/game.php?*mode=imcommings*screen=overview_villages
+// @include     https://*.die-staemme.de/game.php?*screen=place*x=*y=*
+// @include     https://*.die-staemme.de/game.php?*screen=place*try=confirm*
 // @exclude     https://*.die-staemme.de/game.php?*subtype=supports
 // @copyright   2016+, the stabel, git
 // @downloadURL -
@@ -34,7 +36,7 @@ $(function(){
     storageSet("auto_run",storageGet("auto_run","false"));
     s = {"0":{"x":598,"y":387}}
     storageSet("target_list",storageGet("target_list",JSON.stringify(s)));
-    storageSet("config"storageGet("config",JSON.stringify(_config)));
+    storageSet("config",storageGet("config",JSON.stringify(_config)));
 
 
     var autoRun = JSON.parse(storageGet("config")).running==="true";
@@ -67,6 +69,7 @@ $(function(){
                 console.log("id: "+id+", koords: "+JSON.stringify(koords));
                 var timestamp = JSON.parse(storageGet("timestamp"));
                 timestamp[id]=0;//TODO
+                storageSet("timestamp",JSON.stringify(timestamp));
                 koords = nearestTarget(koords);
 
                 var link = "/game.php?village="+id+"&screen=place&x="+koords.x+"&y="+koords.y+"&raus=1";
