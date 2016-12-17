@@ -45,7 +45,13 @@ $(function(){
     if(getPageAttribute("screen")=="overview_villages"&&getPageAttribute("mode")=="incomings"){
         startRunning();
     }else if (getPageAttribute("screen")=="place"&&getPageAttribute("raus")=="1") {
-        onPlace();
+        onPlaceSend();
+    }else if (getPageAttribute("screen")=="place"&&getPageAttribute("try")=="confirm"){
+        onConfirm();
+    }else if (getPageAttribute("screen")=="info_command"&&getPageAttribute("raus")=="1"){
+        onInfoCommand();
+    }else if (getPageAttribute("screen")=="place"){
+        onPlaceCancel();
     }
 
     function startRunning(){
@@ -68,7 +74,8 @@ $(function(){
                 var koords = getVillageKoords(row);
                 console.log("id: "+id+", koords: "+JSON.stringify(koords));
                 var timestamp = JSON.parse(storageGet("timestamp"));
-                timestamp[id]=0;//TODO
+                var config = JSON.parse(storageGet("config"))
+                timestamp[id]=Date.now()+1000*60*config.abbruchzeit;
                 storageSet("timestamp",JSON.stringify(timestamp));
                 koords = nearestTarget(koords);
 
@@ -84,13 +91,51 @@ $(function(){
 
         })();
     }
-    function onPlace(){
+    function onPlaceSend(){
         var form = $("#command-data-form");
         for(var i in _units){
             $("#unit_input_"+_units[i]).attr("value",$("#units_entry_all_"+_units[i]).text().match(/\w+/)[0]);
         }
-        //$("#target_attack").click();
         console.log("click");
+        setTimeout(function(){
+            $("#target_attack").click();
+        },randomInterval(400,600));
+    }
+    function onPlaceCancel(){
+        var div = $("#commands_outgoings");
+        if(div.length>0){
+            var rows = $("tr.command-row",div).slice(1);
+            var row;
+            for(var i=0;i<rows.length;i++){
+                row=rows[i];
+                var cell = $("td",row).first();
+                var attack_text = $("a span",cell).text();
+                if(attack_text.indexOf("Raus_TS:")!=-1){
+                    //var cancel_time = parseInt(attack_text.match(/\w+/g)[1]);
+                    location.href= $("a",cell).attr("href")+"&raus=1";
+                }
+            }
+        }
+    }
+    function onConfirm(){
+
+        var timestamp = JSON.parse(storageGet("timestamp"))[getPageAttribute("village")];
+        if(timestamp<Date.now()||timestamp==undefined){//abbruch
+            return;
+        }
+        var attackname  = "Raus_TS:"+timestamp;
+        var form  = $("#command-data-form");
+        $("th a",form).first().click();
+        $(".rename-icon").click();
+        $('[type="text"]').val(attackname);
+		$("#attack_name_btn",form).click();
+        setTimeout(function(){
+            $("#troop_confirm_go").click();
+        },randomInterval(400,500))
+    }
+    function onInfoCommand(){
+        //TODO Warnung einblenden: Bitte Tab nicht schließen!!
+
     }
     function nearestTarget(koords){
         //returns koords of nearest target
@@ -221,9 +266,12 @@ $(function(){
             return "icon friend offline";
         }
     }
+    function randomInterval(min,max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
     function getPageAttribute(attribute){
         //gibt die php-Attribute zurück, also z.B. von* /game.php?*&screen=report* würde er "report" wiedergeben
-        //return: String
+        //return: String, wenn nicht vorhanden gibt es eine "0" zurück
         var params = document.location.search;
         var value = params.substring(params.indexOf(attribute+"=")+attribute.length+1,params.indexOf("&",params.indexOf(attribute+"=")) != -1 ? params.indexOf("&",params.indexOf(attribute+"=")) : params.length);
         return params.indexOf(attribute+"=")!=-1 ? value : "0";
