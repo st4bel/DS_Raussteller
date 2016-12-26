@@ -46,6 +46,8 @@ $(function(){
         startRunning();
     }else if (getPageAttribute("screen")=="place"&&getPageAttribute("raus")=="1") {
         onPlaceSend();
+    }else if (getPageAttribute("screen")=="place"&&getPageAttribute("raus")=="2") { //Fenster schließen vom abgebrochenen Befehl
+        window.close();
     }else if (getPageAttribute("screen")=="place"&&getPageAttribute("try")=="confirm"){
         onConfirm();
     }else if (getPageAttribute("screen")=="info_command"&&getPageAttribute("raus")=="1"){
@@ -134,8 +136,29 @@ $(function(){
         },randomInterval(400,500))
     }
     function onInfoCommand(){
-        //TODO Warnung einblenden: Bitte Tab nicht schließen!!
-
+        var table = $("#content_value");
+        var cancel_link;
+        $("a",table).each(function(){
+            if($(this).text().indexOf("abbrechen")!=-1){
+                cancel_link = $(this).attr("href")+"&raus=2"; //raus=2 hinweiß zum fenster schließen
+            }
+        });
+        if(cancel_link!=undefined){ //falls abbrechen noch möglich
+            var cancel_time = parseInt($("#command_comment").text().substring($("#command_comment").text().indexOf("TS:")+3,$("#command_comment").text().length));
+            if(cancel_time-Date.now()>0){ //läuft noch ab
+                console.log("Canceling this attack in "+Math.floor(cancel_time-Date.now()/1000)+" sec.")
+                setTimeout(function(){
+                    location.href=cancel_link;
+                },cancel_time-Date.now());
+            }else if(cancel_time-Date.now()<0){ // bereits abgelaufen
+                location.href=cancel_link;
+            }else{
+                return;
+            }//Script-Abbruch falls keine abbruchzeit gefunden
+        }else{
+            return;
+        }
+        table.prepend($("<div>").attr("class","error_box").text("Fenster nicht Schließen! Dieser Befehl wird durch das Rausstellscript in kurzer Zeit abgebrochen."))
     }
     function nearestTarget(koords){
         //returns koords of nearest target
