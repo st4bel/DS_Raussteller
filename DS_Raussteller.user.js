@@ -43,21 +43,21 @@ $(function(){
 
     var autoRun = JSON.parse(storageGet("config")).running==="true";
     init_UI();
-
-    if(getPageAttribute("screen")=="overview_villages"&&getPageAttribute("mode")=="incomings"){
-        onOverview();
-    }else if (getPageAttribute("screen")=="place"&&getPageAttribute("raus")=="1") {
-        onPlaceSend();
-    }else if (getPageAttribute("screen")=="place"&&getPageAttribute("raus")=="2") { //Fenster schließen vom abgebrochenen Befehl
-        window.close();
-    }else if (getPageAttribute("screen")=="place"&&getPageAttribute("try")=="confirm"){
-        onConfirm();
-    }else if (getPageAttribute("screen")=="info_command"&&getPageAttribute("raus")=="1"){
-        onInfoCommand();
-    }else if (getPageAttribute("screen")=="place"){
-        onPlaceCancel();
+    if(JSON.parse(storageGet("config")).running==="true"){
+        if(getPageAttribute("screen")=="overview_villages"&&getPageAttribute("mode")=="incomings"){
+            onOverview();
+        }else if (getPageAttribute("screen")=="place"&&getPageAttribute("raus")=="1") {
+            onPlaceSend();
+        }else if (getPageAttribute("screen")=="place"&&getPageAttribute("raus")=="2") { //Fenster schließen vom abgebrochenen Befehl
+            window.close();
+        }else if (getPageAttribute("screen")=="place"&&getPageAttribute("try")=="confirm"){
+            onConfirm();
+        }else if (getPageAttribute("screen")=="info_command"&&getPageAttribute("raus")=="1"){
+            onInfoCommand();
+        }else if (getPageAttribute("screen")=="place"){
+            onPlaceCancel();
+        }
     }
-
     function onOverview(){
         var table   = $("#incomings_table");
         var rows 	= $("tr",table).slice(1);
@@ -78,13 +78,12 @@ $(function(){
                 var koords = getVillageKoords(row);
                 console.log("id: "+id+", koords: "+JSON.stringify(koords));
                 var timestamp = JSON.parse(storageGet("timestamp"));
-                var config = JSON.parse(storageGet("config"))
+                var config = JSON.parse(storageGet("config"));
                 timestamp[id]=Date.now()+1000*60*config.abbruchzeit;
                 storageSet("timestamp",JSON.stringify(timestamp));
                 koords = nearestTarget(koords);
 
                 var link = "/game.php?village="+id+"&screen=place&x="+koords.x+"&y="+koords.y+"&raus=1";
-                console.log(link)
 				window.open(link, '_blank');
 
             }else{
@@ -138,7 +137,7 @@ $(function(){
 		$("#attack_name_btn",form).click();
         setTimeout(function(){
             $("#troop_confirm_go").click();
-        },randomInterval(400,500))
+        },randomInterval(400,500));
     }
     function onInfoCommand(){
         var table = $("#content_value");
@@ -151,7 +150,7 @@ $(function(){
         if(cancel_link!=undefined){ //falls abbrechen noch möglich
             var cancel_time = parseInt($("#command_comment").text().substring($("#command_comment").text().indexOf("TS:")+3,$("#command_comment").text().length));
             if(cancel_time-Date.now()>0){ //läuft noch ab
-                console.log("Canceling this attack in "+Math.floor(cancel_time-Date.now()/1000)+" sec.")
+                console.log("Canceling this attack in "+Math.floor(cancel_time-Date.now()/1000)+" sec.");
                 setTimeout(function(){
                     location.href=cancel_link;
                 },cancel_time-Date.now());
@@ -163,7 +162,7 @@ $(function(){
         }else{
             return;
         }
-        table.prepend($("<div>").attr("class","error_box").text("Fenster nicht Schließen! Dieser Befehl wird durch das Rausstellscript in kurzer Zeit abgebrochen."))
+        table.prepend($("<div>").attr("class","error_box").text("Fenster nicht Schließen! Dieser Befehl wird durch das Rausstellscript in kurzer Zeit abgebrochen."));
     }
     function nearestTarget(koords){
         //returns koords of nearest target
@@ -196,7 +195,7 @@ $(function(){
     function getVillageKoords(row){
         var cell = $("td",row).eq(1);
         var text = $("a",cell).text();
-        var tab = text.match(/\w+/g)
+        var tab = text.match(/\w+/g);
         var koords = {
             "x":    parseInt(
                         tab[tab.length-3]
@@ -279,6 +278,9 @@ $(function(){
         }
 
         //Foot
+        $("<button>").text("Start/Stop").click(function(){
+            toggleRunning();
+        }).appendTo(settingsDiv);
         $("<button>").text("Schließen").click(function(){
             toggleSettingsVisibility();
         }).appendTo(settingsDiv);
@@ -286,9 +288,15 @@ $(function(){
             window.open(_Anleitungslink, '_blank');
         }).appendTo(settingsDiv);
     }
+    function toggleRunning(){
+        var config = JSON.parse(storageGet("config"));
+        config.running = ""+(config.running==="false");
+        console.log("running set to "+config.running);
+        storageSet("config",JSON.stringify(config));
+        location.reload();
+    }
     function getSymbolStatus(){
-        var status = parseInt(storageGet("status"));
-        if(status!=-1){
+        if(JSON.parse(storageGet("config")).running==="true"){
             return "icon friend online";
         }else{
             return "icon friend offline";
