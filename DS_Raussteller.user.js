@@ -43,7 +43,7 @@ $(function(){
     init_UI();
 
     if(getPageAttribute("screen")=="overview_villages"&&getPageAttribute("mode")=="incomings"){
-        startRunning();
+        onOverview();
     }else if (getPageAttribute("screen")=="place"&&getPageAttribute("raus")=="1") {
         onPlaceSend();
     }else if (getPageAttribute("screen")=="place"&&getPageAttribute("raus")=="2") { //Fenster schließen vom abgebrochenen Befehl
@@ -56,7 +56,7 @@ $(function(){
         onPlaceCancel();
     }
 
-    function startRunning(){
+    function onOverview(){
         var table   = $("#incomings_table");
         var rows 	= $("tr",table).slice(1);
 		var row;
