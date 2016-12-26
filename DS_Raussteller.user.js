@@ -6,12 +6,14 @@
 // @grant       GM_getValue
 // @grant       GM_setValue
 // @grant       unsafeWindow
-// @match       https://*.die-staemme.de/game.php?*mode=incomings*
+// @match       https://*.die-staemme.de/game.php?
 // @include     https://*.die-staemme.de/game.php?*screen=overview_villages*mode=incomings*
 // @include     https://*.die-staemme.de/game.php?*mode=imcommings*screen=overview_villages
-// @include     https://*.die-staemme.de/game.php?*screen=place*x=*y=*
+// @include     https://*.die-staemme.de/game.php?*screen=place*
 // @include     https://*.die-staemme.de/game.php?*screen=place*try=confirm*
-// @exclude     https://*.die-staemme.de/game.php?*subtype=supports
+// @include     https://*.die-staemme.de/game.php?*screen=info_command*
+// @include     https://*.die-staemme.de/game.php?*
+// @exclude     https://*.die-staemme.de/game.php?*subtype=supports*
 // @copyright   2016+, the stabel, git
 // @downloadURL -
 // ==/UserScript==
@@ -89,9 +91,12 @@ $(function(){
                 return; //alle restlichen incoms kommen später an.
             }
             //TODO nächste zeile, wenn unterstützung.
+            //TODO nächste zeile, bei abbruchbedingung / spezielle umbennenung des eingehenden Angriffs
 
 
         })();
+
+        //TODO reload after 6 mins
     }
     function onPlaceSend(){
         var form = $("#command-data-form");
