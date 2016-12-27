@@ -106,7 +106,7 @@ $(function(){
         if(JSON.parse(storageGet("config")).running==="true"){
 			setTimeout(function(){
 				location.href	= "/game.php?screen=overview_villages&mode=incomings&subtype=attacks";
-			},percentage_randomInterval(parseInt(JSON.parse(storageGet("config")).abbruchzeit)*60000,5));
+			},percentage_randomInterval((parseInt(JSON.parse(storageGet("config")).abbruchzeit)*60000)*0.9,5));
 		}
     }
     function onPlaceSend(){
@@ -217,7 +217,7 @@ $(function(){
     function getAttackType(row){
         var cell = $("td",row).eq(0);
         var src = $("img",cell).first().attr("src");
-        return scr.substring(src.indexOf("command/")+8,scr.length-4);
+        return src.substring(src.indexOf("command/")+8,src.length-4);
     }
     function getVillageID(row){
         var cell = $("td",row).eq(1);
