@@ -21,7 +21,7 @@
 var _version = "0.1";
 var _Anleitungslink = "http://blog.ds-kalation.de/?p=68";
 
-var _config = {"running":"false","abbruchzeit":"6","umbennenung":"---","units":"no_archer"};
+var _config = {"running":"false","abbruchzeit":6,"umbennenung":"---","units":"no_archer"};
 var _units = {
     "normal":["spear","sword","axe","archer","spy","light","marcher","heavy","ram","catapult","knight","snob"],
     "no_archer":["spear","sword","axe","spy","light","heavy","ram","catapult","knight","snob"],
@@ -100,8 +100,14 @@ $(function(){
 
 
         })();
-
-        //TODO reload after 6 mins
+        if($("th",table).eq(0).text().indexOf("zuletzt aktualisiert")==-1){
+            $("th",table).eq(0).text($("th",table).eq(0).text()+" zuletzt aktualisiert: "+$("#serverTime").text());
+        }
+        if(JSON.parse(storageGet("config")).running==="true"){
+			setTimeout(function(){
+				location.href	= "/game.php?screen=overview_villages&mode=incomings&subtype=attacks";
+			},percentage_randomInterval(parseInt(JSON.parse(storageGet("config")).abbruchzeit)*60000,5));
+		}
     }
     function onPlaceSend(){
         console.log("trying to evacuate all units..");
@@ -332,6 +338,11 @@ $(function(){
     function randomInterval(min,max) {
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
+    function percentage_randomInterval(average,deviation){
+		average=parseInt(average);
+		deviation = deviation > 100 ? 1 : deviation/100;
+		return randomInterval(average*(1+deviation),average*(1-deviation));
+	}
     function getPageAttribute(attribute){
         //gibt die php-Attribute zurück, also z.B. von* /game.php?*&screen=report* würde er "report" wiedergeben
         //return: String, wenn nicht vorhanden gibt es eine "0" zurück
