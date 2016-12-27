@@ -19,10 +19,15 @@
 // ==/UserScript==
 
 var _version = "0.1";
-var _Anleitungslink = "#";
+var _Anleitungslink = "http://blog.ds-kalation.de/?p=68";
 
-var _config = {"running":"false","abbruchzeit":"6","umbennenung":"---"};
-var _units = ["spear","sword","axe","archer","spy","light","marcher","heavy","ram","catapult","knight","snob"];
+var _config = {"running":"false","abbruchzeit":"6","umbennenung":"---","units":"no_archer"};
+var _units = {
+    "normal":["spear","sword","axe","archer","spy","light","marcher","heavy","ram","catapult","knight","snob"],
+    "no_archer":["spear","sword","axe","spy","light","heavy","ram","catapult","knight","snob"],
+    "no_knight":["spear","sword","axe","archer","spy","light","marcher","heavy","ram","catapult","snob"],
+    "no_archer_knight":["spear","sword","axe","spy","light","heavy","ram","catapult","snob"]
+};
 $(function(){
 
     var storage = localStorage;
@@ -36,9 +41,11 @@ $(function(){
         storage.setItem(storagePrefix+key,val);
     }
     storageSet("auto_run",storageGet("auto_run","false"));
-    s = {"0":{"x":598,"y":387}}
+    var s = {"0":{"x":598,"y":387}};
     storageSet("target_list",storageGet("target_list",JSON.stringify(s)));
     storageSet("config",storageGet("config",JSON.stringify(_config)));
+    s = {"0":0};
+    storageSet("timestamp",storageGet("timestamp",JSON.stringify(s)));
 
 
     var autoRun = JSON.parse(storageGet("config")).running==="true";
@@ -48,8 +55,6 @@ $(function(){
             onOverview();
         }else if (getPageAttribute("screen")=="place"&&getPageAttribute("raus")=="1") {
             onPlaceSend();
-        }else if (getPageAttribute("screen")=="place"&&getPageAttribute("raus")=="2") { //Fenster schließen vom abgebrochenen Befehl
-            window.close();
         }else if (getPageAttribute("screen")=="place"&&getPageAttribute("try")=="confirm"){
             onConfirm();
         }else if (getPageAttribute("screen")=="info_command"&&getPageAttribute("raus")=="1"){
@@ -98,9 +103,11 @@ $(function(){
         //TODO reload after 6 mins
     }
     function onPlaceSend(){
+        console.log("trying to evacuate all units..");
         var form = $("#command-data-form");
-        for(var i in _units){
-            $("#unit_input_"+_units[i]).attr("value",$("#units_entry_all_"+_units[i]).text().match(/\w+/)[0]);
+        var units = _units[JSON.parse(storageGet("config")).units]; //shorter...
+        for(var i in units){
+            $("#unit_input_"+units[i]).attr("value",$("#unit_input_"+units[i]).attr("data-all-count"));
         }
         console.log("click");
         setTimeout(function(){
@@ -108,17 +115,21 @@ $(function(){
         },randomInterval(400,600));
     }
     function onPlaceCancel(){
+        console.log("find outgoing attacks to cancel")
         var div = $("#commands_outgoings");
         if(div.length>0){
-            var rows = $("tr.command-row",div).slice(1);
+            var rows = $("tr.command-row",div).slice(0);
             var row;
             for(var i=0;i<rows.length;i++){
                 row=rows[i];
                 var cell = $("td",row).first();
                 var attack_text = $("a span",cell).text();
                 if(attack_text.indexOf("Raus_TS:")!=-1){
-                    //var cancel_time = parseInt(attack_text.match(/\w+/g)[1]);
                     location.href= $("a",cell).attr("href")+"&raus=1";
+                    console.log("going to");
+                }
+                if(attack_text.indexOf("Raus_Canceled_")!=-1 && (Date.now()-parseInt(attack_text.substring(14,attack_text.length)))<10000){
+                    window.close();
                 }
             }
         }
@@ -133,10 +144,12 @@ $(function(){
         var form  = $("#command-data-form");
         $("th a",form).first().click();
         $(".rename-icon").click();
-        $('[type="text"]').val(attackname);
+        $('[type="text"]',form).val(attackname);
 		$("#attack_name_btn",form).click();
+        console.log("timestamp: "+timestamp+", aktuell: "+Date.now()+", div: "+Math.round((timestamp-Date.now())/60000)+"min.");
         setTimeout(function(){
             $("#troop_confirm_go").click();
+            console.log("confirm");
         },randomInterval(400,500));
     }
     function onInfoCommand(){
@@ -150,8 +163,16 @@ $(function(){
         if(cancel_link!=undefined){ //falls abbrechen noch möglich
             var cancel_time = parseInt($("#command_comment").text().substring($("#command_comment").text().indexOf("TS:")+3,$("#command_comment").text().length));
             if(cancel_time-Date.now()>0){ //läuft noch ab
-                console.log("Canceling this attack in "+Math.floor(cancel_time-Date.now()/1000)+" sec.");
+                console.log("Canceling this attack in "+Math.round((cancel_time-Date.now())/60000)+" min.");
+                $("th a",$("#content_value")).first().click();
+                $(".rename-icon").click();
+                $('[type="text"]',$("#quickedit-rename")).val("Raus_goingtocancel_TS:"+cancel_time);
+                $(".btn",$("#quickedit-rename")).click();
                 setTimeout(function(){
+                    $("th a",$("#content_value")).first().click();
+                    $(".rename-icon").click();
+                    $('[type="text"]',$("#quickedit-rename")).val("Raus_Canceled_"+cancel_time);
+            		$(".btn",$("#quickedit-rename")).click();
                     location.href=cancel_link;
                 },cancel_time-Date.now());
             }else if(cancel_time-Date.now()<0){ // bereits abgelaufen
