@@ -50,7 +50,7 @@ $(function(){
 
     var autoRun = JSON.parse(storageGet("config")).running==="true";
     init_UI();
-    if(JSON.parse(storageGet("config")).running==="true"){
+    if(autoRun){
         if(getPageAttribute("screen")=="overview_villages"&&getPageAttribute("mode")=="incomings"){
             onOverview();
         }else if (getPageAttribute("screen")=="place"&&getPageAttribute("raus")=="1") {
@@ -70,15 +70,16 @@ $(function(){
         var current = -1;
 
         (function tick(){
-            /*if(!autoRun) {
+            if(!autoRun) {
                 console.log("'Raussteller' not running..")
                 return;
-            }*/
+            }
             current ++;
             row=rows[current];
-            //$("td",row).css("background-color","red");
-
-            if(true){//getTimeLeft(row)<=360){ //6 minuten
+            if(getTimeLeft(row)<=360){ //6 minuten
+                if(getAttackType(row)=="support"){
+                    tick(); //überspringen
+                }
                 var id = getVillageID(row);
                 var koords = getVillageKoords(row);
                 console.log("id: "+id+", koords: "+JSON.stringify(koords));
@@ -90,11 +91,11 @@ $(function(){
 
                 var link = "/game.php?village="+id+"&screen=place&x="+koords.x+"&y="+koords.y+"&raus=1";
 				window.open(link, '_blank');
-
+                tick(); //next line
             }else{
-                return; //alle restlichen incoms kommen später an.
+                console.log("no incoms in next few minutes");
+                return;
             }
-            //TODO nächste zeile, wenn unterstützung.
             //TODO nächste zeile, bei abbruchbedingung / spezielle umbennenung des eingehenden Angriffs
 
 
@@ -115,7 +116,7 @@ $(function(){
         },randomInterval(400,600));
     }
     function onPlaceCancel(){
-        console.log("find outgoing attacks to cancel")
+        console.log("find outgoing attacks to cancel");
         var div = $("#commands_outgoings");
         if(div.length>0){
             var rows = $("tr.command-row",div).slice(0);
@@ -128,7 +129,7 @@ $(function(){
                     location.href= $("a",cell).attr("href")+"&raus=1";
                     console.log("going to");
                 }
-                if(attack_text.indexOf("Raus_Canceled_")!=-1 && (Date.now()-parseInt(attack_text.substring(14,attack_text.length)))<10000){
+                if(attack_text.indexOf("Raus_Canceled_")!=-1 && (Date.now()-parseInt(attack_text.substring(attack_text.indexOf("Raus_Canceled_")+14,attack_text.length)))<10000){
                     window.close();
                 }
             }
@@ -206,6 +207,11 @@ $(function(){
         return target_list[best];
 
 
+    }
+    function getAttackType(row){
+        var cell = $("td",row).eq(0);
+        var src = $("img",cell).first().attr("src");
+        return scr.substring(src.indexOf("command/")+8,scr.length-4);
     }
     function getVillageID(row){
         var cell = $("td",row).eq(1);
