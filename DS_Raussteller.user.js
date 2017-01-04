@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        DS_Raussteller
 // @namespace   de.die-staemme
-// @version     0.1
+// @version     0.2
 // @description Stellt Truppen in angegriffenen Dörfern automatisch raus, und bricht die Angriffe ab.
 // @grant       GM_getValue
 // @grant       GM_setValue
@@ -18,10 +18,15 @@
 // @downloadURL -
 // ==/UserScript==
 
+/*
+ * V 0.1: Beginn der Implementierung
+ * V 0.2: Unabhängigkeit von site reload. Timungen per
+ */
+
 var _version = "0.1";
 var _Anleitungslink = "http://blog.ds-kalation.de/?p=68";
 
-var _config = {"running":"false","abbruchzeit":6,"umbennenung":"---","units":"no_archer"};
+var _config = {"running":"false","abbruchzeit":6,"umbennenung":"---","units":"no_archer","rereadtime":20,"criticaltime":30,"frontbuffer":2,"backbuffer":2};
 var _units = {
     "normal":["spear","sword","axe","archer","spy","light","marcher","heavy","ram","catapult","knight","snob"],
     "no_archer":["spear","sword","axe","spy","light","heavy","ram","catapult","knight","snob"],
@@ -46,6 +51,7 @@ $(function(){
     storageSet("config",storageGet("config",JSON.stringify(_config)));
     s = {"0":0};
     storageSet("timestamp",storageGet("timestamp",JSON.stringify(s)));
+    storageSet("incs",storageGet("incs",JSON.stringify(s)));
 
 
     var autoRun = JSON.parse(storageGet("config")).running==="true";
@@ -66,7 +72,7 @@ $(function(){
     function onOverview(){
         var table   = $("#incomings_table");
         var rows 	= $("tr",table).slice(1);
-		var row;
+		    var row;
         var current = -1;
 
         (function tick(){
@@ -90,7 +96,7 @@ $(function(){
                 koords = nearestTarget(koords);
 
                 var link = "/game.php?village="+id+"&screen=place&x="+koords.x+"&y="+koords.y+"&raus=1";
-				window.open(link, '_blank');
+				        window.open(link, '_blank');
                 tick(); //next line
             }else{
                 console.log("no incoms in next few minutes");
@@ -104,10 +110,10 @@ $(function(){
             $("th",table).eq(0).text($("th",table).eq(0).text()+" zuletzt aktualisiert: "+$("#serverTime").text());
         }
         if(JSON.parse(storageGet("config")).running==="true"){
-			setTimeout(function(){
-				location.href	= "/game.php?screen=overview_villages&mode=incomings&subtype=attacks";
-			},percentage_randomInterval((parseInt(JSON.parse(storageGet("config")).abbruchzeit)*60000)*0.9,5));
-		}
+			      setTimeout(function(){
+				          location.href	= "/game.php?screen=overview_villages&mode=incomings&subtype=attacks";
+			      },percentage_randomInterval((parseInt(JSON.parse(storageGet("config")).abbruchzeit)*60000)*0.9,5));
+		    }
     }
     function onPlaceSend(){
         console.log("trying to evacuate all units..");
@@ -152,7 +158,7 @@ $(function(){
         $("th a",form).first().click();
         $(".rename-icon").click();
         $('[type="text"]',form).val(attackname);
-		$("#attack_name_btn",form).click();
+		    $("#attack_name_btn",form).click();
         console.log("timestamp: "+timestamp+", aktuell: "+Date.now()+", div: "+Math.round((timestamp-Date.now())/60000)+"min.");
         setTimeout(function(){
             $("#troop_confirm_go").click();
@@ -179,7 +185,7 @@ $(function(){
                     $("th a",$("#content_value")).first().click();
                     $(".rename-icon").click();
                     $('[type="text"]',$("#quickedit-rename")).val("Raus_Canceled_"+cancel_time);
-            		$(".btn",$("#quickedit-rename")).click();
+            		    $(".btn",$("#quickedit-rename")).click();
                     location.href=cancel_link;
                 },cancel_time-Date.now());
             }else if(cancel_time-Date.now()<0){ // bereits abgelaufen
@@ -191,6 +197,86 @@ $(function(){
             return;
         }
         table.prepend($("<div>").attr("class","error_box").text("Fenster nicht Schließen! Dieser Befehl wird durch das Rausstellscript in kurzer Zeit abgebrochen."));
+    }
+    function readNextIncs(){
+      var table   = $("#incomings_table");
+      var rows 	= $("tr",table).slice(1);
+      var row;
+      var current = -1;
+
+      (function tick(){
+          if(!autoRun) {
+              console.log("'Raussteller' not running..")
+              return;
+          }
+          current ++;
+          row=rows[current];
+          var config = JSON.parse(storageGet("config"));
+          if(getTimeLeft(row)<=config.rereadtime*60){ //6 minuten
+              if(getAttackType(row)=="support"){
+                  tick(); //überspringen
+              }
+              var id = getVillageID(row);
+              var koords = getVillageKoords(row);
+              console.log("id: "+id+", koords: "+JSON.stringify(koords));
+              koords = nearestTarget(koords);
+              var timestamp = Date.now() + getTimeLeft(row)*1000;
+
+              var incs = JSON.parse(storageGet("incs"));
+              incs[getIncID()] = {"village_id":id,"koords":koords,"timestamp":timestamp};
+              storageSet("incs",JSON.stringify(incs));
+
+              //var link = "/game.php?village="+id+"&screen=place&x="+koords.x+"&y="+koords.y+"&raus=1";
+              //window.open(link, '_blank');
+              tick(); //next line
+          }else{
+              console.log("Canceling readNextIncs; No further incoms in next few minutes");
+              return;
+          }
+          //TODO nächste zeile, bei abbruchbedingung / spezielle umbennenung des eingehenden Angriffs
+      })();
+
+    }
+    function planAtts(){
+      var incs = JSON.parse(storageGet("incs"));
+      var config = JSON.parse(storageGet("config"));
+      var atts_on_village = {};
+      for(var inc_id in incs){
+        atts_on_village[incs[inc_id].village_id] = atts_on_village[incs[inc_id].village_id]==undefined?[]:atts_on_village[incs[inc_id].village_id];//erzeuge dieses array wenn nicht vorhanden
+        atts_on_village[incs[inc_id].village_id].push({"koords":incs[inc_id].koords,"start":incs[inc_id].timestamp,"end":incs[inc_id].timestamp,"inc_id":inc_id});
+      }
+      for(var v_id in atts_on_village){
+        //getting min & max timestamp of all incs on the village with v_id
+        /*var min = Date.now()+1000*config.rereadtime*61;
+        var max = 0;
+        for(var i, i<atts_on_village[v_id].length,i++){
+          min = min<atts_on_village[v_id][i].timestamp?min:atts_on_village[v_id][i].timestamp;
+          max = max>atts_on_village[v_id][i].timestamp?max:atts_on_village[v_id][i].timestamp;
+        }*/
+        //Vergleiche jeden angriff auf ein dorf mit allen anderen, ob zu nah beinander
+        for(var i=0;i<atts_on_village[v_id].length;i++){
+          for(var j=i+1;j<atts_on_village[v_id].length;j++){
+            if(Math.abs(atts_on_village[v_id][i].start-atts_on_village[v_id][j].end)<config.criticaltime||Math.abs(atts_on_village[v_id][j].start-atts_on_village[v_id][i].end)<config.criticaltime){
+              //wenn angriffe zu nah sind: zusammenfassen und j-angriff löschen
+              atts_on_village[v_id][i].start = atts_on_village[v_id][i].start<atts_on_village[v_id][j].start?atts_on_village[v_id][i].start:atts_on_village[v_id][i].start;
+              atts_on_village[v_id][i].end = atts_on_village[v_id][i].end>atts_on_village[v_id][j].end?atts_on_village[v_id][i].end:atts_on_village[v_id][j].end;
+              atts_on_village[v_id][j].splice(j,1);
+              j--;
+            }
+          }
+        }
+        
+      }
+    }
+
+
+    function getPseudoServerTime(){
+      //returns time in sek.
+      var text = $("#serverTime").text();
+      var hour = parseInt(text);
+      var min = parseInt(text.substring(text.indexOf(":")+1,text.length));
+      var sek = parseInt(text.substring(text.indexOf(":",text.indexOf(":")+1)+1,text.length));
+      return hour*3600+min*60+sek;
     }
     function nearestTarget(koords){
         //returns koords of nearest target
@@ -251,6 +337,12 @@ $(function(){
         var minute = parseInt(time.substring(time.indexOf(":")+1,time.indexOf(":",time.indexOf(":")+1)));
         var second = parseInt(time.substring(time.indexOf(":",time.indexOf(":")+1)+1,time.length));
         return  hour*3600+minute*60+second;
+    }
+    function getIncID(row){
+        var cell = $("td",row).eq(0);
+        var link = $("a",cell).first().attr("href");
+        var id   = parseInt(link.substring(link.indexOf("id=")+3));
+        return id;
     }
     function init_UI(){
         //create UI_link
