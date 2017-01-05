@@ -75,45 +75,45 @@ $(function(){
         var rows 	= $("tr",table).slice(1);
 		    var row;
         var current = -1;
+        var config = JSON.parse(storageGet("config"))
 
-        /*(function tick(){
+        (function tick(){
             if(!autoRun) {
                 console.log("'Raussteller' not running..")
                 return;
             }
-            current ++;
-            row=rows[current];
-            if(getTimeLeft(row)<=360){ //6 minuten
-                if(getAttackType(row)=="support"){
-                    tick(); //überspringen
+            current = current > 999?0:current + 1;
+            readNextIncs();
+            deleteOldIncs();
+            //geplante Atts ausführen, wenn in den Nächsten 1,5 Ticks fällig
+            var planned_atts = JSON.parse(storageGet("planned_atts"));
+            for(var v_id in planned_atts){
+              for(var i = 0; i<planned_atts[v_id].length;i++){
+                if(planned_atts[v_id][i].start>Date.now()-config.criticaltime*1000){//innerhalb der nächsten criticaltime
+                  //angriff öffnen
+                  //angriff aus planned_atts löschen!
+
                 }
-                var id = getVillageID(row);
-                var koords = getVillageKoords(row);
-                console.log("id: "+id+", koords: "+JSON.stringify(koords));
-                var timestamp = JSON.parse(storageGet("timestamp"));
-                var config = JSON.parse(storageGet("config"));
-                timestamp[id]=Date.now()+1000*60*config.abbruchzeit;
-                storageSet("timestamp",JSON.stringify(timestamp));
-                koords = nearestTarget(koords);
-
-                var link = "/game.php?village="+id+"&screen=place&x="+koords.x+"&y="+koords.y+"&raus=1";
-				        window.open(link, '_blank');
-                tick(); //next line
-            }else{
-                console.log("no incoms in next few minutes");
-                return;
+              }
             }
-            //TODO nächste zeile, bei abbruchbedingung / spezielle umbennenung des eingehenden Angriffs
+            if(current%5==0){//jeder 5. Tick, muss theoretisch nur einmal in jeder config.rereadtime durchgeführt werden
+              planAtts();
+              if(current==0){
+                tick();
+              }
+            }
 
-
-        })();*/
+            setTimeout(function(){//alle 0.5*criticaltime aktualisieren
+              tick();
+            },percentage_randomInterval(500*config.criticaltime,5))
+        })();
         if($("th",table).eq(0).text().indexOf("zuletzt aktualisiert")==-1){
             $("th",table).eq(0).text($("th",table).eq(0).text()+" zuletzt aktualisiert: "+$("#serverTime").text());
         }
-        if(JSON.parse(storageGet("config")).running==="true"){
+        if(config.running==="true"){
 			      setTimeout(function(){
 				          location.href	= "/game.php?screen=overview_villages&mode=incomings&subtype=attacks";
-			      },percentage_randomInterval((parseInt(JSON.parse(storageGet("config")).abbruchzeit)*60000)*0.9,5));
+			      },percentage_randomInterval((parseInt(config.abbruchzeit)*60000)*0.9,5));
 		    }
     }
     function onPlaceSend(){
@@ -205,17 +205,13 @@ $(function(){
       var row;
       var current = -1;
 
-      (function tick(){
-          if(!autoRun) {
-              console.log("'Raussteller' not running..")
-              return;
-          }
+      (function nextrow(){
           current ++;
           row=rows[current];
           var config = JSON.parse(storageGet("config"));
           if(getTimeLeft(row)<=config.rereadtime*60){ //6 minuten
               if(getAttackType(row)=="support"){
-                  tick(); //überspringen
+                  nextrow(); //überspringen
               }
               var id = getVillageID(row);
               var koords = getVillageKoords(row);
@@ -226,10 +222,7 @@ $(function(){
               var incs = JSON.parse(storageGet("incs"));
               incs[getIncID()] = {"village_id":id,"koords":koords,"timestamp":timestamp};
               storageSet("incs",JSON.stringify(incs));
-
-              //var link = "/game.php?village="+id+"&screen=place&x="+koords.x+"&y="+koords.y+"&raus=1";
-              //window.open(link, '_blank');
-              tick(); //next line
+              nextrow(); //next line
           }else{
               console.log("Canceling readNextIncs; No further incoms in next few minutes");
               return;
@@ -237,6 +230,16 @@ $(function(){
           //TODO nächste zeile, bei abbruchbedingung / spezielle umbennenung des eingehenden Angriffs
       })();
 
+    }
+    function deleteOldIncs(){
+      //löscht Incs, die beriets abgelaufen sind.
+      var incs = JSON.parse(storageGet("incs"));
+      for(var inc_id in incs){
+        if(incs[inc_id].timestamp>Date.now()){
+          delete incs[inc_id];
+        }
+      }
+      storageSet("incs",JSON.stringify(incs));
     }
     function planAtts(){
       //erzeugt aus den ausgelesenen Incs rausstellangriffe mit der dorf ID, spätester Abschickzeit und frühster Ankunft als timestamp, sowie Zielkoordinaten
