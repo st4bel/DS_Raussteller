@@ -251,12 +251,8 @@ $(function(){
         //Vergleiche jeden angriff auf ein dorf mit allen anderen, ob zu nah beinander
         for(var i=0;i<atts_on_village[v_id].length;i++){
           for(var j=i+1;j<atts_on_village[v_id].length;j++){
-            var start_i = atts_on_village[v_id][i].start;
-            var start_j = atts_on_village[v_id][j].start;
-            var end_i = atts_on_village[v_id][i].end;
-            var end_i = atts_on_village[v_id][j].end;
 
-            if(start_j<end_i+config.criticaltime||(start_i>start_j&&start_i<end_j+config.criticaltime)){
+            if(atts_on_village[v_id][j].start<atts_on_village[v_id][i].end+config.criticaltime||(atts_on_village[v_id][i].start>atts_on_village[v_id][j].start&&atts_on_village[v_id][i].start<atts_on_village[v_id][j].end+config.criticaltime)){
               //wenn angriffe zu nah sind: zusammenfassen und j-angriff löschen
               atts_on_village[v_id][i].start = atts_on_village[v_id][i].start<atts_on_village[v_id][j].start?atts_on_village[v_id][i].start:atts_on_village[v_id][i].start;
               atts_on_village[v_id][i].end = atts_on_village[v_id][i].end>atts_on_village[v_id][j].end?atts_on_village[v_id][i].end:atts_on_village[v_id][j].end;
