@@ -255,11 +255,11 @@ $(function(){
             var start_j = atts_on_village[v_id][j].start;
             var end_i = atts_on_village[v_id][i].end;
             var end_i = atts_on_village[v_id][j].end;
-            if(start_i>start_j){
-              start_i:start_j;
-
-            if(start_i-end_j<config.criticaltime||start_j-end_i<config.criticaltime||(&&))
-            if(Math.abs(atts_on_village[v_id][i].start-atts_on_village[v_id][j].end)<config.criticaltime||Math.abs(atts_on_village[v_id][j].start-atts_on_village[v_id][i].end)<config.criticaltime){
+            if(start_i>start_j){// i soll für die nachfolgenden unterscheidungen immer der erste angriff sein!
+              start_j=start_i;
+              end_i=end_j;
+            }
+            if(start_j<end_i+config.criticaltime){
               //wenn angriffe zu nah sind: zusammenfassen und j-angriff löschen
               atts_on_village[v_id][i].start = atts_on_village[v_id][i].start<atts_on_village[v_id][j].start?atts_on_village[v_id][i].start:atts_on_village[v_id][i].start;
               atts_on_village[v_id][i].end = atts_on_village[v_id][i].end>atts_on_village[v_id][j].end?atts_on_village[v_id][i].end:atts_on_village[v_id][j].end;
