@@ -52,6 +52,7 @@ $(function(){
     s = {"0":0};
     storageSet("timestamp",storageGet("timestamp",JSON.stringify(s)));
     storageSet("incs",storageGet("incs",JSON.stringify(s)));
+    storageSet("planned_atts",storageGet("planned_atts",JSON.stringify(s)));
 
 
     var autoRun = JSON.parse(storageGet("config")).running==="true";
@@ -75,7 +76,7 @@ $(function(){
 		    var row;
         var current = -1;
 
-        (function tick(){
+        /*(function tick(){
             if(!autoRun) {
                 console.log("'Raussteller' not running..")
                 return;
@@ -105,7 +106,7 @@ $(function(){
             //TODO nächste zeile, bei abbruchbedingung / spezielle umbennenung des eingehenden Angriffs
 
 
-        })();
+        })();*/
         if($("th",table).eq(0).text().indexOf("zuletzt aktualisiert")==-1){
             $("th",table).eq(0).text($("th",table).eq(0).text()+" zuletzt aktualisiert: "+$("#serverTime").text());
         }
@@ -238,35 +239,38 @@ $(function(){
 
     }
     function planAtts(){
+      //erzeugt aus den ausgelesenen Incs rausstellangriffe mit der dorf ID, spätester Abschickzeit und frühster Ankunft als timestamp, sowie Zielkoordinaten
       var incs = JSON.parse(storageGet("incs"));
       var config = JSON.parse(storageGet("config"));
-      var atts_on_village = {};
+      var atts_on_village = JSON.parse(storageGet("planned_atts"));
       for(var inc_id in incs){
         atts_on_village[incs[inc_id].village_id] = atts_on_village[incs[inc_id].village_id]==undefined?[]:atts_on_village[incs[inc_id].village_id];//erzeuge dieses array wenn nicht vorhanden
-        atts_on_village[incs[inc_id].village_id].push({"koords":incs[inc_id].koords,"start":incs[inc_id].timestamp,"end":incs[inc_id].timestamp,"inc_id":inc_id});
+        atts_on_village[incs[inc_id].village_id].push({"koords":incs[inc_id].koords,"start":incs[inc_id].timestamp,"end":incs[inc_id].timestamp,"inc_id":[inc_id]});
       }
       for(var v_id in atts_on_village){
-        //getting min & max timestamp of all incs on the village with v_id
-        /*var min = Date.now()+1000*config.rereadtime*61;
-        var max = 0;
-        for(var i, i<atts_on_village[v_id].length,i++){
-          min = min<atts_on_village[v_id][i].timestamp?min:atts_on_village[v_id][i].timestamp;
-          max = max>atts_on_village[v_id][i].timestamp?max:atts_on_village[v_id][i].timestamp;
-        }*/
         //Vergleiche jeden angriff auf ein dorf mit allen anderen, ob zu nah beinander
         for(var i=0;i<atts_on_village[v_id].length;i++){
           for(var j=i+1;j<atts_on_village[v_id].length;j++){
+            var start_i = atts_on_village[v_id][i].start;
+            var start_j = atts_on_village[v_id][j].start;
+            var end_i = atts_on_village[v_id][i].end;
+            var end_i = atts_on_village[v_id][j].end;
+            if(start_i>start_j){
+              start_i:start_j;
+
+            if(start_i-end_j<config.criticaltime||start_j-end_i<config.criticaltime||(&&))
             if(Math.abs(atts_on_village[v_id][i].start-atts_on_village[v_id][j].end)<config.criticaltime||Math.abs(atts_on_village[v_id][j].start-atts_on_village[v_id][i].end)<config.criticaltime){
               //wenn angriffe zu nah sind: zusammenfassen und j-angriff löschen
               atts_on_village[v_id][i].start = atts_on_village[v_id][i].start<atts_on_village[v_id][j].start?atts_on_village[v_id][i].start:atts_on_village[v_id][i].start;
               atts_on_village[v_id][i].end = atts_on_village[v_id][i].end>atts_on_village[v_id][j].end?atts_on_village[v_id][i].end:atts_on_village[v_id][j].end;
+              atts_on_village[v_id][i].inc_id.concat(atts_on_village[v_id][j].inc_id)
               atts_on_village[v_id][j].splice(j,1);
               j--;
             }
           }
         }
-        
       }
+      storageSet("planned_atts",JSON.stringify(atts_on_village));
     }
 
 
