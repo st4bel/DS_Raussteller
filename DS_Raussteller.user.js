@@ -82,23 +82,31 @@ $(function(){
                 console.log("'Raussteller' not running..")
                 return;
             }
-            current = current > 999?0:current + 1;
+            current = current > 1000?1:current + 1;
             readNextIncs();
             deleteOldIncs();
             //geplante Atts ausführen, wenn in den Nächsten 1,5 Ticks fällig
             var planned_atts = JSON.parse(storageGet("planned_atts"));
             for(var v_id in planned_atts){
               for(var i = 0; i<planned_atts[v_id].length;i++){
-                if(planned_atts[v_id][i].start>Date.now()-config.criticaltime*1000){//innerhalb der nächsten criticaltime
-                  //angriff öffnen
-                  //angriff aus planned_atts löschen!
+                if(planned_atts[v_id][i].start>Date.now()-config.criticaltime*1000&&planned_atts[v_id][i].flag!=="true"){//innerhalb der nächsten criticaltime
+                  //angriff vorbereiten und öffnen
+                  //script arbeitet auf allen anderen Seiten mit der localStorage variable "timestamp"
+                  var timestamp = JSON.parse(storageGet("timestamp"));
+                  timestamp[v_id] = {"start":(planned_atts[v_id][i].start-config.frontbuffer*1000),"cancel":(Math.floor((planned_atts[v_id][i].start-config.frontbuffer*1000+planned_atts[v_id][i].end+config.backbuffer*1000)/2)+1000)};
+                  storageSet("timestamp",JSON.stringify(timestamp));
 
+                  var link = "/game.php?village="+v_id+"&screen=place&x="+planned_atts[v_id][i].koords.x+"&y="+planned_atts[v_id][i].koords.y+"&raus=1";
+				          window.open(link, '_blank');
+                  //angriff aus planned_atts löschen!
+                  planned_atts[v_id][i].flag="true"; //gibt an, dass dieser angriff bereits geschickt wurde..
                 }
               }
             }
+            storageSet("planned_atts",JSON.parse(planned_atts));
             if(current%5==0){//jeder 5. Tick, muss theoretisch nur einmal in jeder config.rereadtime durchgeführt werden
               planAtts();
-              if(current==0){
+              if(current==0){//da im ersten durchlauf angriffe erst nach dem theoretischen Losschicken berechnet werden, sofort neustarten
                 tick();
               }
             }
@@ -107,19 +115,15 @@ $(function(){
               tick();
             },percentage_randomInterval(500*config.criticaltime,5))
         })();
-        if($("th",table).eq(0).text().indexOf("zuletzt aktualisiert")==-1){
+        if($("th",table).eq(0).text().indexOf("zuletzt aktualisiert")==-1){//TODO ergibt derzeit noch keinen sinn..
             $("th",table).eq(0).text($("th",table).eq(0).text()+" zuletzt aktualisiert: "+$("#serverTime").text());
         }
-        if(config.running==="true"){
-			      setTimeout(function(){
-				          location.href	= "/game.php?screen=overview_villages&mode=incomings&subtype=attacks";
-			      },percentage_randomInterval((parseInt(config.abbruchzeit)*60000)*0.9,5));
-		    }
     }
-    function onPlaceSend(){
+    function onPlaceSend(){//TODO unterscheidung alle, keine, einige truppen
         console.log("trying to evacuate all units..");
         var form = $("#command-data-form");
-        var units = _units[JSON.parse(storageGet("config")).units]; //shorter...
+        var config = JSON.parse(storageGet("config"));
+        var units = _units[config.units]; //shorter...
         for(var i in units){
             $("#unit_input_"+units[i]).attr("value",$("#unit_input_"+units[i]).attr("data-all-count"));
         }
@@ -149,7 +153,16 @@ $(function(){
         }
     }
     function onConfirm(){
-
+      /*(function waitToSend(){
+        if(starttime-Date.now()>config.frontbuffer*1000){//noch nicht sendebereit, dann in viertel frontbuffer-schritten zur Losschick-Zeit
+          console.log("Waiting... starttime: "+starttime+", dif: "+(starttime-Date.now()));
+          setTimeout(function(){
+            waitToSend();
+          },config.frontbuffer*250)
+        }else{//Zeit ist ready
+          return;
+        }
+      })();*/
         var timestamp = JSON.parse(storageGet("timestamp"))[getPageAttribute("village")];
         if(timestamp<Date.now()||timestamp==undefined){//abbruch
             return;
@@ -248,7 +261,7 @@ $(function(){
       var atts_on_village = JSON.parse(storageGet("planned_atts"));
       for(var inc_id in incs){
         atts_on_village[incs[inc_id].village_id] = atts_on_village[incs[inc_id].village_id]==undefined?[]:atts_on_village[incs[inc_id].village_id];//erzeuge dieses array wenn nicht vorhanden
-        atts_on_village[incs[inc_id].village_id].push({"koords":incs[inc_id].koords,"start":incs[inc_id].timestamp,"end":incs[inc_id].timestamp,"inc_id":[inc_id]});
+        atts_on_village[incs[inc_id].village_id].push({"koords":incs[inc_id].koords,"start":incs[inc_id].timestamp,"end":incs[inc_id].timestamp,"inc_id":[inc_id],"flag":"false"});
       }
       for(var v_id in atts_on_village){
         //Vergleiche jeden angriff auf ein dorf mit allen anderen, ob zu nah beinander
@@ -259,6 +272,7 @@ $(function(){
               //wenn angriffe zu nah sind: zusammenfassen und j-angriff löschen
               atts_on_village[v_id][i].start = atts_on_village[v_id][i].start<atts_on_village[v_id][j].start?atts_on_village[v_id][i].start:atts_on_village[v_id][i].start;
               atts_on_village[v_id][i].end = atts_on_village[v_id][i].end>atts_on_village[v_id][j].end?atts_on_village[v_id][i].end:atts_on_village[v_id][j].end;
+              atts_on_village[v_id][i].flag = atts_on_village[v_id][j].flag === "true" ? "true" : atts_on_village[v_id][i].flag;
               atts_on_village[v_id][i].inc_id.concat(atts_on_village[v_id][j].inc_id)
               atts_on_village[v_id][j].splice(j,1);
               j--;
