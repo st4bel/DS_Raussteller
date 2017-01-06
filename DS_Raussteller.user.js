@@ -153,31 +153,31 @@ $(function(){
         }
     }
     function onConfirm(){
-      /*(function waitToSend(){
-        if(starttime-Date.now()>config.frontbuffer*1000){//noch nicht sendebereit, dann in viertel frontbuffer-schritten zur Losschick-Zeit
-          console.log("Waiting... starttime: "+starttime+", dif: "+(starttime-Date.now()));
-          setTimeout(function(){
-            waitToSend();
-          },config.frontbuffer*250)
-        }else{//Zeit ist ready
-          return;
-        }
-      })();*/
+        var config = JSON.parse(storageGet("config"));
         var timestamp = JSON.parse(storageGet("timestamp"))[getPageAttribute("village")];
-        if(timestamp<Date.now()||timestamp==undefined){//abbruch
+        if(timestamp.start<Date.now()||timestamp.start==undefined){//abbruch
             return;
         }
-        var attackname  = "Raus_TS:"+timestamp;
+        var attackname  = "Raus_TS:"+timestamp.cancel;
         var form  = $("#command-data-form");
         $("th a",form).first().click();
         $(".rename-icon").click();
         $('[type="text"]',form).val(attackname);
 		    $("#attack_name_btn",form).click();
-        console.log("timestamp: "+timestamp+", aktuell: "+Date.now()+", div: "+Math.round((timestamp-Date.now())/60000)+"min.");
-        setTimeout(function(){
-            $("#troop_confirm_go").click();
-            console.log("confirm");
-        },randomInterval(400,500));
+
+        (function waitToSend(){
+          if(timstamp.start-Date.now()>config.frontbuffer*1000){//noch nicht sendebereit, dann in viertel frontbuffer-schritten zur Losschick-Zeit
+            console.log("Waiting... starttime: "+timestamp.start+", dif: "+(timestamp.start-Date.now()));
+            setTimeout(function(){
+              waitToSend();
+            },config.frontbuffer*250)
+          }else{//Zeit ist ready
+            return;
+          }
+        })();
+        console.log("Ready to send!");
+        console.log("timestamp.cancel: "+timestamp.cancel+", aktuell: "+Date.now()+", div: "+Math.round((timestamp.cancel-Date.now())/1000)+"sek.");
+        $("#troop_confirm_go").click();
     }
     function onInfoCommand(){
         var table = $("#content_value");
@@ -190,7 +190,7 @@ $(function(){
         if(cancel_link!=undefined){ //falls abbrechen noch möglich
             var cancel_time = parseInt($("#command_comment").text().substring($("#command_comment").text().indexOf("TS:")+3,$("#command_comment").text().length));
             if(cancel_time-Date.now()>0){ //läuft noch ab
-                console.log("Canceling this attack in "+Math.round((cancel_time-Date.now())/60000)+" min.");
+                console.log("Canceling this attack in "+Math.round((cancel_time-Date.now())/1000)+" sek.");
                 $("th a",$("#content_value")).first().click();
                 $(".rename-icon").click();
                 $('[type="text"]',$("#quickedit-rename")).val("Raus_goingtocancel_TS:"+cancel_time);
