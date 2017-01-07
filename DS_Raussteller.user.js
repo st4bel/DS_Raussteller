@@ -48,13 +48,14 @@ $(function(){
     storageSet("auto_run",storageGet("auto_run","false"));
     var s = {"0":{"x":598,"y":387}};
     storageSet("target_list",storageGet("target_list",JSON.stringify(s)));
-    storageSet("config",storageGet("config",JSON.stringify(_config)));
+    storageSet("config",storageGet("config",JSON.stringify(_config)));//JSON.stringify(_config));//
     s = {"0":0};
     storageSet("timestamp",storageGet("timestamp",JSON.stringify(s)));
     storageSet("incs",storageGet("incs",JSON.stringify(s)));
-    s = {0:[{"koords":incs[inc_id].koords,"start":incs[inc_id].timestamp,"end":incs[inc_id].timestamp,"inc_id":[inc_id],"flag":"false"}]};
+    s = {0:[{"koords":{x:0,y:0},"start":0,"end":0,"inc_id":[0],"flag":"false"}]};
     storageSet("planned_atts",storageGet("planned_atts",JSON.stringify(s)));
 
+    console.log("init_UI")
     var autoRun = JSON.parse(storageGet("config")).running==="true";
     init_UI();
     if(autoRun){
@@ -71,11 +72,12 @@ $(function(){
         }
     }
     function onOverview(){
+        console.log("onOverview");
         var table   = $("#incomings_table");
         var rows 	= $("tr",table).slice(1);
 		    var row;
         var current = -1;
-        var config = JSON.parse(storageGet("config"))
+        var config = JSON.parse(storageGet("config"));
 
         (function tick(){
             if(!autoRun) {
@@ -83,13 +85,17 @@ $(function(){
                 return;
             }
             current = current > 1000?1:current + 1;
+            console.log("tick #"+current);
             readNextIncs();
             deleteOldIncs();
             //geplante Atts ausführen, wenn in den Nächsten 1,5 Ticks fällig
             var planned_atts = JSON.parse(storageGet("planned_atts"));
+            console.log("handling planned atts...")
             for(var v_id in planned_atts){
               for(var i = 0; i<planned_atts[v_id].length;i++){
+                console.log("v_id: "+v_id+", i:"+i+", if(time): "+(planned_atts[v_id][i].start>Date.now()-config.criticaltime*1000)+", if(flag): "+(planned_atts[v_id][i].flag!=="true"));
                 if(planned_atts[v_id][i].start>Date.now()-config.criticaltime*1000&&planned_atts[v_id][i].flag!=="true"){//innerhalb der nächsten criticaltime
+                  console.log("prepare new att...")
                   //angriff vorbereiten und öffnen
                   //script arbeitet auf allen anderen Seiten mit der localStorage variable "timestamp"
                   var timestamp = JSON.parse(storageGet("timestamp"));
@@ -103,7 +109,8 @@ $(function(){
                 }
               }
             }
-            storageSet("planned_atts",JSON.parse(planned_atts));
+            storageSet("planned_atts",JSON.stringify(planned_atts));
+            alert("warte ")
             if(current%5==0){//jeder 5. Tick, muss theoretisch nur einmal in jeder config.rereadtime durchgeführt werden
               planAtts();
               if(current==0){//da im ersten durchlauf angriffe erst nach dem theoretischen Losschicken berechnet werden, sofort neustarten
@@ -213,7 +220,7 @@ $(function(){
         table.prepend($("<div>").attr("class","error_box").text("Fenster nicht Schließen! Dieser Befehl wird durch das Rausstellscript in kurzer Zeit abgebrochen."));
     }
     function readNextIncs(){
-      console.logs("reading next incs...");
+      console.log("reading next incs...");
       var table   = $("#incomings_table");
       var rows 	= $("tr",table).slice(1);
       var row;
@@ -231,7 +238,7 @@ $(function(){
               var koords = getVillageKoords(row);
               console.log("inc found; id: "+id+", koords: "+JSON.stringify(koords));
               koords = nearestTarget(koords);
-              console.log("found nearest Target: "+JSON.stringify(koords));
+              console.log("found nearest target: "+JSON.stringify(koords));
               var timestamp = Date.now() + getTimeLeft(row)*1000;
 
               var incs = JSON.parse(storageGet("incs"));
@@ -251,13 +258,15 @@ $(function(){
       //löscht Incs, die beriets abgelaufen sind.
       console.log("deleting old incs...");
       var incs = JSON.parse(storageGet("incs"));
+      var counter = 0
       for(var inc_id in incs){
         if(incs[inc_id].timestamp>Date.now()){
           delete incs[inc_id];
+          counter++;
         }
       }
       storageSet("incs",JSON.stringify(incs));
-      console.log("deleted incs!");
+      console.log("deleted "+counter+" inc(s)!");
     }
     function planAtts(){
       //erzeugt aus den ausgelesenen Incs rausstellangriffe mit der dorf ID, spätester Abschickzeit und frühster Ankunft als timestamp, sowie Zielkoordinaten
@@ -348,6 +357,7 @@ $(function(){
     }
     function getTimeLeft(row){
         //returns time left in seconds.
+        console.log("getting time left...")
         var cell = $("td",row).last();
         cell.css("background-color","red");
         var time = "-1";
@@ -357,12 +367,14 @@ $(function(){
         var hour = parseInt(time.substring(0,time.indexOf(":")));
         var minute = parseInt(time.substring(time.indexOf(":")+1,time.indexOf(":",time.indexOf(":")+1)));
         var second = parseInt(time.substring(time.indexOf(":",time.indexOf(":")+1)+1,time.length));
+        console.log("time left in seconds: "+(hour*3600+minute*60+second));
         return  hour*3600+minute*60+second;
     }
     function getIncID(row){
         var cell = $("td",row).eq(0);
         var link = $("a",cell).first().attr("href");
         var id   = parseInt(link.substring(link.indexOf("id=")+3));
+        console.log("getting inc_id... "+id);
         return id;
     }
     function init_UI(){
