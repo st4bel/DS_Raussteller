@@ -55,7 +55,6 @@ $(function(){
     s = {0:[{"koords":incs[inc_id].koords,"start":incs[inc_id].timestamp,"end":incs[inc_id].timestamp,"inc_id":[inc_id],"flag":"false"}]};
     storageSet("planned_atts",storageGet("planned_atts",JSON.stringify(s)));
 
-
     var autoRun = JSON.parse(storageGet("config")).running==="true";
     init_UI();
     if(autoRun){
@@ -80,7 +79,7 @@ $(function(){
 
         (function tick(){
             if(!autoRun) {
-                console.log("'Raussteller' not running..")
+                console.log("'Raussteller' not running..");
                 return;
             }
             current = current > 1000?1:current + 1;
@@ -114,7 +113,7 @@ $(function(){
 
             setTimeout(function(){//alle 0.5*criticaltime aktualisieren
               tick();
-            },percentage_randomInterval(500*config.criticaltime,5))
+            },percentage_randomInterval(500*config.criticaltime,5));
         })();
         if($("th",table).eq(0).text().indexOf("zuletzt aktualisiert")==-1){//TODO ergibt derzeit noch keinen sinn..
             $("th",table).eq(0).text($("th",table).eq(0).text()+" zuletzt aktualisiert: "+$("#serverTime").text());
@@ -151,7 +150,7 @@ $(function(){
                 }
             }
         }
-        console.log("no att to cancel found...")
+        console.log("no att to cancel found...");
     }
     function onConfirm(){
         var config = JSON.parse(storageGet("config"));
@@ -171,7 +170,7 @@ $(function(){
             console.log("Waiting... starttime: "+timestamp.start+", dif: "+(timestamp.start-Date.now()));
             setTimeout(function(){
               waitToSend();
-            },config.frontbuffer*250)
+            },config.frontbuffer*250);
           }else{//Zeit ist ready
             return;
           }
@@ -214,7 +213,7 @@ $(function(){
         table.prepend($("<div>").attr("class","error_box").text("Fenster nicht Schließen! Dieser Befehl wird durch das Rausstellscript in kurzer Zeit abgebrochen."));
     }
     function readNextIncs(){
-      console.logs("reading next incs...")
+      console.logs("reading next incs...");
       var table   = $("#incomings_table");
       var rows 	= $("tr",table).slice(1);
       var row;
@@ -232,13 +231,13 @@ $(function(){
               var koords = getVillageKoords(row);
               console.log("inc found; id: "+id+", koords: "+JSON.stringify(koords));
               koords = nearestTarget(koords);
-              console.log("found nearest Target: "JSON.stringify(koords));
+              console.log("found nearest Target: "+JSON.stringify(koords));
               var timestamp = Date.now() + getTimeLeft(row)*1000;
 
               var incs = JSON.parse(storageGet("incs"));
               incs[getIncID()] = {"village_id":id,"koords":koords,"timestamp":timestamp};
               storageSet("incs",JSON.stringify(incs));
-              console.log("searching for more incs...")
+              console.log("searching for more incs...");
               nextrow(); //next line
           }else{
               console.log("Canceling readNextIncs; No further incoms in next few minutes");
@@ -250,7 +249,7 @@ $(function(){
     }
     function deleteOldIncs(){
       //löscht Incs, die beriets abgelaufen sind.
-      console.log("deleting old incs...")
+      console.log("deleting old incs...");
       var incs = JSON.parse(storageGet("incs"));
       for(var inc_id in incs){
         if(incs[inc_id].timestamp>Date.now()){
@@ -258,7 +257,7 @@ $(function(){
         }
       }
       storageSet("incs",JSON.stringify(incs));
-      console.log("deleted incs!")
+      console.log("deleted incs!");
     }
     function planAtts(){
       //erzeugt aus den ausgelesenen Incs rausstellangriffe mit der dorf ID, spätester Abschickzeit und frühster Ankunft als timestamp, sowie Zielkoordinaten
@@ -280,7 +279,7 @@ $(function(){
               atts_on_village[v_id][i].start = atts_on_village[v_id][i].start<atts_on_village[v_id][j].start?atts_on_village[v_id][i].start:atts_on_village[v_id][i].start;
               atts_on_village[v_id][i].end = atts_on_village[v_id][i].end>atts_on_village[v_id][j].end?atts_on_village[v_id][i].end:atts_on_village[v_id][j].end;
               atts_on_village[v_id][i].flag = atts_on_village[v_id][j].flag === "true" ? "true" : atts_on_village[v_id][i].flag;
-              atts_on_village[v_id][i].inc_id.concat(atts_on_village[v_id][j].inc_id)
+              atts_on_village[v_id][i].inc_id.concat(atts_on_village[v_id][j].inc_id);
               atts_on_village[v_id][j].splice(j,1);
               j--;
             }
@@ -288,7 +287,7 @@ $(function(){
         }
       }
       storageSet("planned_atts",JSON.stringify(atts_on_village));
-      console.log("finished planning atts!")
+      console.log("finished planning atts!");
     }
 
 
