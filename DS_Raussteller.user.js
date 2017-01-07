@@ -52,6 +52,7 @@ $(function(){
     s = {"0":0};
     storageSet("timestamp",storageGet("timestamp",JSON.stringify(s)));
     storageSet("incs",storageGet("incs",JSON.stringify(s)));
+    s = {0:[{"koords":incs[inc_id].koords,"start":incs[inc_id].timestamp,"end":incs[inc_id].timestamp,"inc_id":[inc_id],"flag":"false"}]};
     storageSet("planned_atts",storageGet("planned_atts",JSON.stringify(s)));
 
 
@@ -133,7 +134,7 @@ $(function(){
         },randomInterval(400,600));
     }
     function onPlaceCancel(){
-        console.log("find outgoing attacks to cancel");
+        console.log("find outgoing attacks to cancel...");
         var div = $("#commands_outgoings");
         if(div.length>0){
             var rows = $("tr.command-row",div).slice(0);
@@ -144,13 +145,13 @@ $(function(){
                 var attack_text = $("a span",cell).text();
                 if(attack_text.indexOf("Raus_TS:")!=-1){
                     location.href= $("a",cell).attr("href")+"&raus=1";
-                    console.log("going to");
                 }
                 if(attack_text.indexOf("Raus_Canceled_")!=-1 && (Date.now()-parseInt(attack_text.substring(attack_text.indexOf("Raus_Canceled_")+14,attack_text.length)))<10000){
                     window.close();
                 }
             }
         }
+        console.log("no att to cancel found...")
     }
     function onConfirm(){
         var config = JSON.parse(storageGet("config"));
@@ -213,6 +214,7 @@ $(function(){
         table.prepend($("<div>").attr("class","error_box").text("Fenster nicht Schließen! Dieser Befehl wird durch das Rausstellscript in kurzer Zeit abgebrochen."));
     }
     function readNextIncs(){
+      console.logs("reading next incs...")
       var table   = $("#incomings_table");
       var rows 	= $("tr",table).slice(1);
       var row;
@@ -228,13 +230,15 @@ $(function(){
               }
               var id = getVillageID(row);
               var koords = getVillageKoords(row);
-              console.log("id: "+id+", koords: "+JSON.stringify(koords));
+              console.log("inc found; id: "+id+", koords: "+JSON.stringify(koords));
               koords = nearestTarget(koords);
+              console.log("found nearest Target: "JSON.stringify(koords));
               var timestamp = Date.now() + getTimeLeft(row)*1000;
 
               var incs = JSON.parse(storageGet("incs"));
               incs[getIncID()] = {"village_id":id,"koords":koords,"timestamp":timestamp};
               storageSet("incs",JSON.stringify(incs));
+              console.log("searching for more incs...")
               nextrow(); //next line
           }else{
               console.log("Canceling readNextIncs; No further incoms in next few minutes");
@@ -246,6 +250,7 @@ $(function(){
     }
     function deleteOldIncs(){
       //löscht Incs, die beriets abgelaufen sind.
+      console.log("deleting old incs...")
       var incs = JSON.parse(storageGet("incs"));
       for(var inc_id in incs){
         if(incs[inc_id].timestamp>Date.now()){
@@ -253,9 +258,11 @@ $(function(){
         }
       }
       storageSet("incs",JSON.stringify(incs));
+      console.log("deleted incs!")
     }
     function planAtts(){
       //erzeugt aus den ausgelesenen Incs rausstellangriffe mit der dorf ID, spätester Abschickzeit und frühster Ankunft als timestamp, sowie Zielkoordinaten
+      console.log("planning atts...");
       var incs = JSON.parse(storageGet("incs"));
       var config = JSON.parse(storageGet("config"));
       var atts_on_village = JSON.parse(storageGet("planned_atts"));
@@ -281,6 +288,7 @@ $(function(){
         }
       }
       storageSet("planned_atts",JSON.stringify(atts_on_village));
+      console.log("finished planning atts!")
     }
 
 
