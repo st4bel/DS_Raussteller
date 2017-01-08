@@ -51,7 +51,7 @@ $(function(){
     storageSet("config",storageGet("config",JSON.stringify(_config)));//JSON.stringify(_config));//
     s = {"0":0};
     storageSet("timestamp",storageGet("timestamp",JSON.stringify(s)));
-    storageSet("incs",storageGet("incs",JSON.stringify(s)));
+    storageSet("incs",storageGet("incs","{}"));
     s = {0:[{"koords":{x:0,y:0},"start":0,"end":0,"inc_id":[0],"flag":"false"}]};
     storageSet("planned_atts",storageGet("planned_atts",JSON.stringify(s)));
 
@@ -109,8 +109,9 @@ $(function(){
                 }
               }
             }
+            console.log("pa "+JSON.stringify(planned_atts))
             storageSet("planned_atts",JSON.stringify(planned_atts));
-            alert("warte ")
+            alert("warte "+JSON.stringify(planned_atts));
             if(current%5==0){//jeder 5. Tick, muss theoretisch nur einmal in jeder config.rereadtime durchgeführt werden
               planAtts();
               if(current==0){//da im ersten durchlauf angriffe erst nach dem theoretischen Losschicken berechnet werden, sofort neustarten
@@ -120,7 +121,7 @@ $(function(){
 
             setTimeout(function(){//alle 0.5*criticaltime aktualisieren
               tick();
-            },percentage_randomInterval(500*config.criticaltime,5));
+            },percentage_randomInterval(4000*config.criticaltime,5));
         })();
         if($("th",table).eq(0).text().indexOf("zuletzt aktualisiert")==-1){//TODO ergibt derzeit noch keinen sinn..
             $("th",table).eq(0).text($("th",table).eq(0).text()+" zuletzt aktualisiert: "+$("#serverTime").text());
@@ -230,6 +231,7 @@ $(function(){
           current ++;
           row=rows[current];
           var config = JSON.parse(storageGet("config"));
+          console.log("row: "+current+", timeleft: "+getTimeLeft(row)+", config: "+(config.rereadtime*60));
           if(getTimeLeft(row)<=config.rereadtime*60){ //6 minuten
               if(getAttackType(row)=="support"){
                   nextrow(); //überspringen
@@ -242,7 +244,7 @@ $(function(){
               var timestamp = Date.now() + getTimeLeft(row)*1000;
 
               var incs = JSON.parse(storageGet("incs"));
-              incs[getIncID()] = {"village_id":id,"koords":koords,"timestamp":timestamp};
+              incs[getIncID(row)] = {"village_id":id,"koords":koords,"timestamp":timestamp};
               storageSet("incs",JSON.stringify(incs));
               console.log("searching for more incs...");
               nextrow(); //next line
@@ -256,17 +258,17 @@ $(function(){
     }
     function deleteOldIncs(){
       //löscht Incs, die beriets abgelaufen sind.
-      console.log("deleting old incs...");
       var incs = JSON.parse(storageGet("incs"));
+      console.log("deleting old incs... "+JSON.stringify(incs));
       var counter = 0
       for(var inc_id in incs){
-        if(incs[inc_id].timestamp>Date.now()){
+        if(incs[inc_id].timestamp<Date.now()){
           delete incs[inc_id];
           counter++;
         }
       }
       storageSet("incs",JSON.stringify(incs));
-      console.log("deleted "+counter+" inc(s)!");
+      console.log("deleted "+counter+" inc(s)! "+JSON.stringify(incs));
     }
     function planAtts(){
       //erzeugt aus den ausgelesenen Incs rausstellangriffe mit der dorf ID, spätester Abschickzeit und frühster Ankunft als timestamp, sowie Zielkoordinaten
@@ -339,6 +341,7 @@ $(function(){
         var cell = $("td",row).eq(1);
         var link = $("a",cell).attr("href");
         var id   = parseInt(link.substring(link.indexOf("village=")+8));
+        console.log("getVillageID: "+id)
         return id;
     }
     function getVillageKoords(row){
@@ -357,9 +360,8 @@ $(function(){
     }
     function getTimeLeft(row){
         //returns time left in seconds.
-        console.log("getting time left...")
         var cell = $("td",row).last();
-        cell.css("background-color","red");
+        //cell.css("background-color","red");
         var time = "-1";
         $("span",cell).each(function(){
             time= $(this).text();
@@ -367,14 +369,14 @@ $(function(){
         var hour = parseInt(time.substring(0,time.indexOf(":")));
         var minute = parseInt(time.substring(time.indexOf(":")+1,time.indexOf(":",time.indexOf(":")+1)));
         var second = parseInt(time.substring(time.indexOf(":",time.indexOf(":")+1)+1,time.length));
-        console.log("time left in seconds: "+(hour*3600+minute*60+second));
         return  hour*3600+minute*60+second;
     }
     function getIncID(row){
+        console.log("getting inc id...")
         var cell = $("td",row).eq(0);
         var link = $("a",cell).first().attr("href");
         var id   = parseInt(link.substring(link.indexOf("id=")+3));
-        console.log("getting inc_id... "+id);
+        console.log("got inc id: "+id);
         return id;
     }
     function init_UI(){
