@@ -55,7 +55,7 @@ $(function(){
     s = {0:[{"koords":{x:0,y:0},"start":0,"end":0,"inc_id":[0],"flag":"false"}]};
     storageSet("planned_atts",storageGet("planned_atts",JSON.stringify(s)));
 
-    console.log("init_UI")
+    console.log("init_UI");
     var autoRun = JSON.parse(storageGet("config")).running==="true";
     init_UI();
     if(autoRun){
@@ -90,12 +90,12 @@ $(function(){
             deleteOldIncs();
             //geplante Atts ausführen, wenn in den Nächsten 1,5 Ticks fällig
             var planned_atts = JSON.parse(storageGet("planned_atts"));
-            console.log("handling planned atts...")
+            console.log("handling planned atts...");
             for(var v_id in planned_atts){
               for(var i = 0; i<planned_atts[v_id].length;i++){
                 console.log("v_id: "+v_id+", i:"+i+", if(time): "+(planned_atts[v_id][i].start>Date.now()-config.criticaltime*1000)+", if(flag): "+(planned_atts[v_id][i].flag!=="true"));
                 if(planned_atts[v_id][i].start>Date.now()-config.criticaltime*1000&&planned_atts[v_id][i].flag!=="true"){//innerhalb der nächsten criticaltime
-                  console.log("prepare new att...")
+                  console.log("prepare new att...");
                   //angriff vorbereiten und öffnen
                   //script arbeitet auf allen anderen Seiten mit der localStorage variable "timestamp"
                   var timestamp = JSON.parse(storageGet("timestamp"));
@@ -109,14 +109,14 @@ $(function(){
                 }
               }
             }
-            console.log("pa "+JSON.stringify(planned_atts))
+            console.log("pa "+JSON.stringify(planned_atts));
             storageSet("planned_atts",JSON.stringify(planned_atts));
-            alert("warte "+JSON.stringify(planned_atts));
+            //alert("warte "+JSON.stringify(planned_atts));
             if(current%5==0){//jeder 5. Tick, muss theoretisch nur einmal in jeder config.rereadtime durchgeführt werden
               planAtts();
-              if(current==0){//da im ersten durchlauf angriffe erst nach dem theoretischen Losschicken berechnet werden, sofort neustarten
+              /*if(current==0){//da im ersten durchlauf angriffe erst nach dem theoretischen Losschicken berechnet werden, sofort neustarten
                 tick();
-              }
+              }*/
             }
 
             setTimeout(function(){//alle 0.5*criticaltime aktualisieren
@@ -172,9 +172,9 @@ $(function(){
         $(".rename-icon").click();
         $('[type="text"]',form).val(attackname);
 		    $("#attack_name_btn",form).click();
-
-        (function waitToSend(){
-          if(timstamp.start-Date.now()>config.frontbuffer*1000){//noch nicht sendebereit, dann in viertel frontbuffer-schritten zur Losschick-Zeit
+        waitToSend();
+        function waitToSend(){
+          if(timestamp.start-Date.now()>config.frontbuffer*1000){//noch nicht sendebereit, dann in viertel frontbuffer-schritten zur Losschick-Zeit
             console.log("Waiting... starttime: "+timestamp.start+", dif: "+(timestamp.start-Date.now()));
             setTimeout(function(){
               waitToSend();
@@ -182,10 +182,10 @@ $(function(){
           }else{//Zeit ist ready
             return;
           }
-        })();
+        }
         console.log("Ready to send!");
         console.log("timestamp.cancel: "+timestamp.cancel+", aktuell: "+Date.now()+", div: "+Math.round((timestamp.cancel-Date.now())/1000)+"sek.");
-        $("#troop_confirm_go").click();
+        //$("#troop_confirm_go").click();
     }
     function onInfoCommand(){
         var table = $("#content_value");
@@ -226,8 +226,8 @@ $(function(){
       var rows 	= $("tr",table).slice(1);
       var row;
       var current = -1;
-
-      (function nextrow(){
+      nextrow();
+      function nextrow(){
           current ++;
           row=rows[current];
           var config = JSON.parse(storageGet("config"));
@@ -253,14 +253,14 @@ $(function(){
               return;
           }
           //TODO nächste zeile, bei abbruchbedingung / spezielle umbennenung des eingehenden Angriffs
-      })();
+      }
 
     }
     function deleteOldIncs(){
       //löscht Incs, die beriets abgelaufen sind.
       var incs = JSON.parse(storageGet("incs"));
       console.log("deleting old incs... "+JSON.stringify(incs));
-      var counter = 0
+      var counter = 0;
       for(var inc_id in incs){
         if(incs[inc_id].timestamp<Date.now()){
           delete incs[inc_id];
@@ -269,6 +269,22 @@ $(function(){
       }
       storageSet("incs",JSON.stringify(incs));
       console.log("deleted "+counter+" inc(s)! "+JSON.stringify(incs));
+      console.log("deleting old planned_atts... "+storageGet("planned_atts"));
+      var planned_atts = JSON.parse(storageGet("planned_atts"));
+      for(var v_id in planned_atts){
+        for(var i in planned_atts[v_id]){
+          if(planned_atts[v_id][i].start<Date.now()){
+            console.log("dort")
+            planned_atts[v_id].splice(i,1);
+            i--;
+          }
+        }
+        if(planned_atts[v_id].length==0){
+          delete planned_atts[v_id];
+        }
+      }
+      storageSet("planned_atts",JSON.stringify(planned_atts));
+      console.log("deleted... "+storageGet("planned_atts"));
     }
     function planAtts(){
       //erzeugt aus den ausgelesenen Incs rausstellangriffe mit der dorf ID, spätester Abschickzeit und frühster Ankunft als timestamp, sowie Zielkoordinaten
@@ -291,7 +307,7 @@ $(function(){
               atts_on_village[v_id][i].end = atts_on_village[v_id][i].end>atts_on_village[v_id][j].end?atts_on_village[v_id][i].end:atts_on_village[v_id][j].end;
               atts_on_village[v_id][i].flag = atts_on_village[v_id][j].flag === "true" ? "true" : atts_on_village[v_id][i].flag;
               atts_on_village[v_id][i].inc_id.concat(atts_on_village[v_id][j].inc_id);
-              atts_on_village[v_id][j].splice(j,1);
+              atts_on_village[v_id].splice(j,1);
               j--;
             }
           }
@@ -341,7 +357,7 @@ $(function(){
         var cell = $("td",row).eq(1);
         var link = $("a",cell).attr("href");
         var id   = parseInt(link.substring(link.indexOf("village=")+8));
-        console.log("getVillageID: "+id)
+        console.log("getVillageID: "+id);
         return id;
     }
     function getVillageKoords(row){
@@ -372,7 +388,7 @@ $(function(){
         return  hour*3600+minute*60+second;
     }
     function getIncID(row){
-        console.log("getting inc id...")
+        console.log("getting inc id...");
         var cell = $("td",row).eq(0);
         var link = $("a",cell).first().attr("href");
         var id   = parseInt(link.substring(link.indexOf("id=")+3));
