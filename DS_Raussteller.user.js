@@ -25,6 +25,7 @@
 
 var _version = "0.1";
 var _Anleitungslink = "http://blog.ds-kalation.de/?p=68";
+var _UpdateLink = "https://github.com/st4bel/DS_Raussteller/releases";
 
 var _config = {"running":"false","abbruchzeit":6,"umbennenung":"---","units":"no_archer","rereadtime":20,"criticaltime":30,"frontbuffer":2,"backbuffer":2};
 var _units = {
@@ -180,8 +181,6 @@ $(function(){
               waitToSend();
             },config.frontbuffer*250);
           }else{//Zeit ist ready
-            console.log("Ready to send!");
-            console.log("timestamp.cancel: "+timestamp.cancel+", aktuell: "+Date.now()+", div: "+Math.round((timestamp.cancel-Date.now())/1000)+"sek.");
             $("#troop_confirm_go").click();
           }
         }
@@ -430,7 +429,7 @@ $(function(){
             "z-index":"100000",
             "left":"50px",
             "top":"50px",
-            "width":"800px",
+            "width":"500px",
             "height":"400px",
             "background-color":"white",
             "border":"1px solid black",
@@ -450,6 +449,78 @@ $(function(){
 
             settingsDivVisible=!settingsDivVisible;
         }
+        //Head
+        $("<h2>").text("Einstellungen DS_Raussteller").appendTo(settingsDiv);
+        $("<span>").text("Version: "+_version+" ").appendTo(settingsDiv);
+        $("<button>").text("Update").click(function(){
+            window.open(_UpdateLink,'_blank');
+        }).appendTo(settingsDiv);
+        //Body
+        var settingsTable=$("<table>").appendTo(settingsDiv);
+        function addRow(desc,content){
+          $("<tr>")
+          .append($("<td>").append(desc))
+          .append($("<td>").append(content))
+          .appendTo(settingsTable);
+        }
+        var select_units = $("<select>")
+    		.append($("<option>").text("Alle").attr("value","normal"))
+        .append($("<option>").text("Alle außer Bögen").attr("value","no_archer"))
+        .append($("<option>").text("Alle außer Paladin").attr("value","no_knight"))
+        .append($("<option>").text("keine Bögen sowie Paladin").attr("value","no_archer_knight"))
+        .change(function(){
+          var config = JSON.parse(storageGet("config"));
+          config.units = $("option:selected",$(this)).val();
+          storageSet("config",JSON.stringify(config));
+        });
+    		$("option[value="+JSON.parse(storageGet("config")).units+"]",select_units).prop("selected",true);
+
+        var input_rereadtime = $("<input>")
+    		.attr("type","text")
+    		.val(JSON.parse(storageGet("config")).rereadtime)
+    		.on("input",function(){
+          var config = JSON.parse(storageGet("config"));
+          if(parseInt($(this).val())>Math.ceil(config.criticaltime/30)){ // reread > 2*critical (vorsichtig)
+            config.rereadtime = parseInt($(this).val());
+            storageSet("config",JSON.stringify(config));
+          }
+    		});
+        var input_criticaltime = $("<input>")
+    		.attr("type","text")
+    		.val(JSON.parse(storageGet("config")).criticaltime)
+    		.on("input",function(){
+          if(parseInt($(this).val())>0){
+            var config = JSON.parse(storageGet("config"));
+            config.criticaltime = parseInt($(this).val());
+            storageSet("config",JSON.stringify(config));
+          }
+    		});
+        var input_buffertime = $("<input>")
+    		.attr("type","text")
+    		.val(JSON.parse(storageGet("config")).frontbuffer)
+    		.on("input",function(){
+          if(parseInt($(this).val())>0){
+            var config = JSON.parse(storageGet("config"));
+            config.frontbuffer = parseInt($(this).val());
+            config.backbuffer = parseInt($(this).val());
+            storageSet("config",JSON.stringify(config));
+          }
+    		});
+
+        $("<tr>").append($("<td>").attr("colspan",2).append($("<span>").attr("style","font-weight: bold;").text("Allgemein:"))).appendTo(settingsTable);
+        addRow(
+    		$("<span>").text("Einheiten auf dieser Welt: "),
+    		select_units);
+        $("<tr>").append($("<td>").attr("colspan",2).append($("<span>").attr("style","font-weight: bold;").text("Zeiten:"))).appendTo(settingsTable);
+        addRow(
+    		$("<span>").text("Die nächsten x Minuten einlesen: "),
+    		input_rereadtime);
+        addRow(
+    		$("<span>").text("Feindliche Angriffe, die weniger \nals x Sekunden entfernt sind zusammenfassen:"),
+    		input_criticaltime);
+        addRow(
+    		$("<span>").text("'Angstsekunden' (<0): "),
+    		input_buffertime);
 
         //Foot
         $("<button>").text("Start/Stop").click(function(){
@@ -460,10 +531,6 @@ $(function(){
         }).appendTo(settingsDiv);
         $("<button>").text("Anleitung").click(function(){
             window.open(_Anleitungslink, '_blank');
-        }).appendTo(settingsDiv);
-        $("<button>").text("Daten Löschen").click(function(){
-            storageSet("planned_atts","{}");
-            storageSet("incs","{}");
         }).appendTo(settingsDiv);
     }
     function toggleRunning(){
