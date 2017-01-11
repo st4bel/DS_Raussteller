@@ -23,7 +23,7 @@
  * V 0.2: Unabhängigkeit von site reload. Timungen per
  */
 
-var _version = "0.1";
+var _version = "0.2";
 var _Anleitungslink = "http://blog.ds-kalation.de/?p=68";
 var _UpdateLink = "https://github.com/st4bel/DS_Raussteller/releases";
 
