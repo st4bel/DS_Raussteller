@@ -93,8 +93,8 @@ $(function(){
             console.log("handling planned atts...");
             for(var v_id in planned_atts){
               for(var i = 0; i<planned_atts[v_id].length;i++){
-                console.log("v_id: "+v_id+", i:"+i+", if(time): "+(planned_atts[v_id][i].start>Date.now()-config.criticaltime*1000)+", if(flag): "+(planned_atts[v_id][i].flag!=="true"));
-                if(planned_atts[v_id][i].start>Date.now()-config.criticaltime*1000&&planned_atts[v_id][i].flag!=="true"){//innerhalb der nächsten criticaltime
+                console.log("v_id: "+v_id+", i: "+i+", if(time): "+(planned_atts[v_id][i].start<Date.now()+config.criticaltime*1100)+", if(flag): "+(planned_atts[v_id][i].flag!=="true"));
+                if((planned_atts[v_id][i].start<Date.now()+config.criticaltime*1100)&&(planned_atts[v_id][i].flag!=="true")){//innerhalb der nächsten criticaltime
                   console.log("prepare new att...");
                   //angriff vorbereiten und öffnen
                   //script arbeitet auf allen anderen Seiten mit der localStorage variable "timestamp"
@@ -121,7 +121,7 @@ $(function(){
 
             setTimeout(function(){//alle 0.5*criticaltime aktualisieren
               tick();
-            },percentage_randomInterval(4000*config.criticaltime,5));
+            },percentage_randomInterval(1000*config.criticaltime,5));
         })();
         if($("th",table).eq(0).text().indexOf("zuletzt aktualisiert")==-1){//TODO ergibt derzeit noch keinen sinn..
             $("th",table).eq(0).text($("th",table).eq(0).text()+" zuletzt aktualisiert: "+$("#serverTime").text());
@@ -300,8 +300,8 @@ $(function(){
         //Vergleiche jeden angriff auf ein dorf mit allen anderen, ob zu nah beinander
         for(var i=0;i<atts_on_village[v_id].length;i++){
           for(var j=i+1;j<atts_on_village[v_id].length;j++){
-
-            if(atts_on_village[v_id][j].start<atts_on_village[v_id][i].end+config.criticaltime||(atts_on_village[v_id][i].start>atts_on_village[v_id][j].start&&atts_on_village[v_id][i].start<atts_on_village[v_id][j].end+config.criticaltime)){
+            console.log("first: "+(atts_on_village[v_id][j].start<atts_on_village[v_id][i].end+config.criticaltime*1000)+", second: "+(atts_on_village[v_id][i].start>atts_on_village[v_id][j].start)+", third: "+(atts_on_village[v_id][i].start<atts_on_village[v_id][j].end+config.criticaltime*1000))
+            if(atts_on_village[v_id][j].start<atts_on_village[v_id][i].end+config.criticaltime*1000||(atts_on_village[v_id][i].start>atts_on_village[v_id][j].start&&atts_on_village[v_id][i].start<atts_on_village[v_id][j].end+config.criticaltime*1000)){
               //wenn angriffe zu nah sind: zusammenfassen und j-angriff löschen
               atts_on_village[v_id][i].start = atts_on_village[v_id][i].start<atts_on_village[v_id][j].start?atts_on_village[v_id][i].start:atts_on_village[v_id][i].start;
               atts_on_village[v_id][i].end = atts_on_village[v_id][i].end>atts_on_village[v_id][j].end?atts_on_village[v_id][i].end:atts_on_village[v_id][j].end;
@@ -316,8 +316,6 @@ $(function(){
       storageSet("planned_atts",JSON.stringify(atts_on_village));
       console.log("finished planning atts!");
     }
-
-
     function getPseudoServerTime(){
       //returns time in sek.
       var text = $("#serverTime").text();
@@ -462,6 +460,10 @@ $(function(){
         }).appendTo(settingsDiv);
         $("<button>").text("Anleitung").click(function(){
             window.open(_Anleitungslink, '_blank');
+        }).appendTo(settingsDiv);
+        $("<button>").text("Daten Löschen").click(function(){
+            storageSet("planned_atts","{}");
+            storageSet("incs","{}");
         }).appendTo(settingsDiv);
     }
     function toggleRunning(){
