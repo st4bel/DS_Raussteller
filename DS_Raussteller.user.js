@@ -93,8 +93,8 @@ $(function(){
             console.log("handling planned atts...");
             for(var v_id in planned_atts){
               for(var i = 0; i<planned_atts[v_id].length;i++){
-                console.log("v_id: "+v_id+", i: "+i+", if(time): "+(planned_atts[v_id][i].start<Date.now()+config.criticaltime*1100)+", if(flag): "+(planned_atts[v_id][i].flag!=="true"));
-                if((planned_atts[v_id][i].start<Date.now()+config.criticaltime*1100)&&(planned_atts[v_id][i].flag!=="true")){//innerhalb der nächsten criticaltime
+                console.log("v_id: "+v_id+", i: "+i+", if(time): "+(planned_atts[v_id][i].start<Date.now()+(config.criticaltime+2*config.frontbuffer)*1000)+", if(flag): "+(planned_atts[v_id][i].flag!=="true"));
+                if((planned_atts[v_id][i].start<Date.now()+(config.criticaltime+2*config.frontbuffer)*1000)&&(planned_atts[v_id][i].flag!=="true")){//innerhalb der nächsten criticaltime
                   console.log("prepare new att...");
                   //angriff vorbereiten und öffnen
                   //script arbeitet auf allen anderen Seiten mit der localStorage variable "timestamp"
@@ -180,12 +180,11 @@ $(function(){
               waitToSend();
             },config.frontbuffer*250);
           }else{//Zeit ist ready
-            return;
+            console.log("Ready to send!");
+            console.log("timestamp.cancel: "+timestamp.cancel+", aktuell: "+Date.now()+", div: "+Math.round((timestamp.cancel-Date.now())/1000)+"sek.");
+            $("#troop_confirm_go").click();
           }
         }
-        console.log("Ready to send!");
-        console.log("timestamp.cancel: "+timestamp.cancel+", aktuell: "+Date.now()+", div: "+Math.round((timestamp.cancel-Date.now())/1000)+"sek.");
-        //$("#troop_confirm_go").click();
     }
     function onInfoCommand(){
         var table = $("#content_value");
@@ -269,14 +268,15 @@ $(function(){
       }
       storageSet("incs",JSON.stringify(incs));
       console.log("deleted "+counter+" inc(s)! "+JSON.stringify(incs));
-      console.log("deleting old planned_atts... "+storageGet("planned_atts"));
+      counter=0;
+      console.log("deleting old planned_atts...");
       var planned_atts = JSON.parse(storageGet("planned_atts"));
       for(var v_id in planned_atts){
         for(var i in planned_atts[v_id]){
           if(planned_atts[v_id][i].start<Date.now()){
-            console.log("dort")
             planned_atts[v_id].splice(i,1);
             i--;
+            counter++;
           }
         }
         if(planned_atts[v_id].length==0){
@@ -284,7 +284,7 @@ $(function(){
         }
       }
       storageSet("planned_atts",JSON.stringify(planned_atts));
-      console.log("deleted... "+storageGet("planned_atts"));
+      console.log("deleted "+counter+" atts... ");
     }
     function planAtts(){
       //erzeugt aus den ausgelesenen Incs rausstellangriffe mit der dorf ID, spätester Abschickzeit und frühster Ankunft als timestamp, sowie Zielkoordinaten
