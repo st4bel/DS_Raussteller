@@ -27,7 +27,7 @@ var _version = "0.2";
 var _Anleitungslink = "http://blog.ds-kalation.de/?p=68";
 var _UpdateLink = "https://github.com/st4bel/DS_Raussteller/releases";
 
-var _config = {"running":"false","abbruchzeit":6,"umbennenung":"---","units":"no_archer","rereadtime":20,"criticaltime":30,"frontbuffer":2,"backbuffer":2};
+var _config = {"running":"false","debug":"false","umbennenung":"---","units":"no_archer","rereadtime":20,"criticaltime":30,"frontbuffer":2,"backbuffer":2};
 var _units = {
     "normal":["spear","sword","axe","archer","spy","light","marcher","heavy","ram","catapult","knight","snob"],
     "no_archer":["spear","sword","axe","spy","light","heavy","ram","catapult","knight","snob"],
@@ -37,7 +37,7 @@ var _units = {
 $(function(){
 
     var storage = localStorage;
-    var storagePrefix="raussteller_";
+    var storagePrefix="raussteller_v0.2+_";
     //Speicherfunktionen
     function storageGet(key,defaultValue) {
         var value= storage.getItem(storagePrefix+key);
@@ -49,14 +49,14 @@ $(function(){
     storageSet("auto_run",storageGet("auto_run","false"));
     var s = {"0":{"x":598,"y":387}};
     storageSet("target_list",storageGet("target_list",JSON.stringify(s)));
-    storageSet("config",storageGet("config",JSON.stringify(_config)));//JSON.stringify(_config));//
+    storageSet("config",storageGet("config",JSON.stringify(_config)));
     s = {"0":0};
     storageSet("timestamp",storageGet("timestamp",JSON.stringify(s)));
     storageSet("incs",storageGet("incs","{}"));
     s = {0:[{"koords":{x:0,y:0},"start":0,"end":0,"inc_id":[0],"flag":"false"}]};
     storageSet("planned_atts",storageGet("planned_atts",JSON.stringify(s)));
 
-    console.log("init_UI");
+    add_log("init_UI");
     var autoRun = JSON.parse(storageGet("config")).running==="true";
     init_UI();
     if(autoRun){
@@ -73,7 +73,7 @@ $(function(){
         }
     }
     function onOverview(){
-        console.log("onOverview");
+        add_log("onOverview");
         var table   = $("#incomings_table");
         var rows 	= $("tr",table).slice(1);
 		    var row;
@@ -82,21 +82,21 @@ $(function(){
 
         (function tick(){
             if(!autoRun) {
-                console.log("'Raussteller' not running..");
+                add_log("'Raussteller' not running..");
                 return;
             }
             current = current > 1000?1:current + 1;
-            console.log("tick #"+current);
+            add_log("tick #"+current);
             readNextIncs();
             deleteOldIncs();
             //geplante Atts ausführen, wenn in den Nächsten 1,5 Ticks fällig
             var planned_atts = JSON.parse(storageGet("planned_atts"));
-            console.log("handling planned atts...");
+            add_log("handling planned atts...");
             for(var v_id in planned_atts){
               for(var i = 0; i<planned_atts[v_id].length;i++){
-                console.log("v_id: "+v_id+", i: "+i+", if(time): "+(planned_atts[v_id][i].start<Date.now()+(config.criticaltime+2*config.frontbuffer)*1000)+", if(flag): "+(planned_atts[v_id][i].flag!=="true"));
+                add_log("v_id: "+v_id+", i: "+i+", if(time): "+(planned_atts[v_id][i].start<Date.now()+(config.criticaltime+2*config.frontbuffer)*1000)+", if(flag): "+(planned_atts[v_id][i].flag!=="true"));
                 if((planned_atts[v_id][i].start<Date.now()+(config.criticaltime+2*config.frontbuffer)*1000)&&(planned_atts[v_id][i].flag!=="true")){//innerhalb der nächsten criticaltime
-                  console.log("prepare new att...");
+                  add_log("prepare new att...");
                   //angriff vorbereiten und öffnen
                   //script arbeitet auf allen anderen Seiten mit der localStorage variable "timestamp"
                   var timestamp = JSON.parse(storageGet("timestamp"));
@@ -110,7 +110,7 @@ $(function(){
                 }
               }
             }
-            console.log("pa "+JSON.stringify(planned_atts));
+            add_log("pa "+JSON.stringify(planned_atts));
             storageSet("planned_atts",JSON.stringify(planned_atts));
             //alert("warte "+JSON.stringify(planned_atts));
             if(current%5==0){//jeder 5. Tick, muss theoretisch nur einmal in jeder config.rereadtime durchgeführt werden
@@ -129,20 +129,20 @@ $(function(){
         }
     }
     function onPlaceSend(){//TODO unterscheidung alle, keine, einige truppen
-        console.log("trying to evacuate all units..");
+        add_log("trying to evacuate all units..");
         var form = $("#command-data-form");
         var config = JSON.parse(storageGet("config"));
         var units = _units[config.units]; //shorter...
         for(var i in units){
             $("#unit_input_"+units[i]).attr("value",$("#unit_input_"+units[i]).attr("data-all-count"));
         }
-        console.log("click");
+        add_log("click");
         setTimeout(function(){
             $("#target_attack").click();
         },randomInterval(400,600));
     }
     function onPlaceCancel(){
-        console.log("find outgoing attacks to cancel...");
+        add_log("find outgoing attacks to cancel...");
         var div = $("#commands_outgoings");
         if(div.length>0){
             var rows = $("tr.command-row",div).slice(0);
@@ -159,7 +159,7 @@ $(function(){
                 }
             }
         }
-        console.log("no att to cancel found...");
+        add_log("no att to cancel found...");
     }
     function onConfirm(){
         var config = JSON.parse(storageGet("config"));
@@ -176,7 +176,7 @@ $(function(){
         waitToSend();
         function waitToSend(){
           if(timestamp.start-Date.now()>config.frontbuffer*1000){//noch nicht sendebereit, dann in viertel frontbuffer-schritten zur Losschick-Zeit
-            console.log("Waiting... starttime: "+timestamp.start+", dif: "+(timestamp.start-Date.now()));
+            add_log("Waiting... starttime: "+timestamp.start+", dif: "+(timestamp.start-Date.now()));
             setTimeout(function(){
               waitToSend();
             },config.frontbuffer*250);
@@ -196,7 +196,7 @@ $(function(){
         if(cancel_link!=undefined){ //falls abbrechen noch möglich
             var cancel_time = parseInt($("#command_comment").text().substring($("#command_comment").text().indexOf("TS:")+3,$("#command_comment").text().length));
             if(cancel_time-Date.now()>0){ //läuft noch ab
-                console.log("Canceling this attack in "+Math.round((cancel_time-Date.now())/1000)+" sek.");
+                add_log("Canceling this attack in "+Math.round((cancel_time-Date.now())/1000)+" sek.");
                 $("th a",$("#content_value")).first().click();
                 $(".rename-icon").click();
                 $('[type="text"]',$("#quickedit-rename")).val("Raus_goingtocancel_TS:"+cancel_time);
@@ -219,7 +219,7 @@ $(function(){
         table.prepend($("<div>").attr("class","error_box").text("Fenster nicht Schließen! Dieser Befehl wird durch das Rausstellscript in kurzer Zeit abgebrochen."));
     }
     function readNextIncs(){
-      console.log("reading next incs...");
+      add_log("reading next incs...");
       var table   = $("#incomings_table");
       var rows 	= $("tr",table).slice(1);
       var row;
@@ -229,25 +229,25 @@ $(function(){
           current ++;
           row=rows[current];
           var config = JSON.parse(storageGet("config"));
-          console.log("row: "+current+", timeleft: "+getTimeLeft(row)+", config: "+(config.rereadtime*60));
+          add_log("row: "+current+", timeleft: "+getTimeLeft(row)+", config: "+(config.rereadtime*60));
           if(getTimeLeft(row)<=config.rereadtime*60){ //6 minuten
               if(getAttackType(row)=="support"){
                   nextrow(); //überspringen
               }
               var id = getVillageID(row);
               var koords = getVillageKoords(row);
-              console.log("inc found; id: "+id+", koords: "+JSON.stringify(koords));
+              add_log("inc found; id: "+id+", koords: "+JSON.stringify(koords));
               koords = nearestTarget(koords);
-              console.log("found nearest target: "+JSON.stringify(koords));
+              add_log("found nearest target: "+JSON.stringify(koords));
               var timestamp = Date.now() + getTimeLeft(row)*1000;
 
               var incs = JSON.parse(storageGet("incs"));
               incs[getIncID(row)] = {"village_id":id,"koords":koords,"timestamp":timestamp};
               storageSet("incs",JSON.stringify(incs));
-              console.log("searching for more incs...");
+              add_log("searching for more incs...");
               nextrow(); //next line
           }else{
-              console.log("Canceling readNextIncs; No further incoms in next few minutes");
+              add_log("Canceling readNextIncs; No further incoms in next few minutes");
               return;
           }
           //TODO nächste zeile, bei abbruchbedingung / spezielle umbennenung des eingehenden Angriffs
@@ -257,7 +257,7 @@ $(function(){
     function deleteOldIncs(){
       //löscht Incs, die beriets abgelaufen sind.
       var incs = JSON.parse(storageGet("incs"));
-      console.log("deleting old incs... "+JSON.stringify(incs));
+      add_log("deleting old incs... "+JSON.stringify(incs));
       var counter = 0;
       for(var inc_id in incs){
         if(incs[inc_id].timestamp<Date.now()){
@@ -266,9 +266,9 @@ $(function(){
         }
       }
       storageSet("incs",JSON.stringify(incs));
-      console.log("deleted "+counter+" inc(s)! "+JSON.stringify(incs));
+      add_log("deleted "+counter+" inc(s)! "+JSON.stringify(incs));
       counter=0;
-      console.log("deleting old planned_atts...");
+      add_log("deleting old planned_atts...");
       var planned_atts = JSON.parse(storageGet("planned_atts"));
       for(var v_id in planned_atts){
         for(var i in planned_atts[v_id]){
@@ -283,11 +283,11 @@ $(function(){
         }
       }
       storageSet("planned_atts",JSON.stringify(planned_atts));
-      console.log("deleted "+counter+" atts... ");
+      add_log("deleted "+counter+" atts... ");
     }
     function planAtts(){
       //erzeugt aus den ausgelesenen Incs rausstellangriffe mit der dorf ID, spätester Abschickzeit und frühster Ankunft als timestamp, sowie Zielkoordinaten
-      console.log("planning atts...");
+      add_log("planning atts...");
       var incs = JSON.parse(storageGet("incs"));
       var config = JSON.parse(storageGet("config"));
       var atts_on_village = JSON.parse(storageGet("planned_atts"));
@@ -299,7 +299,7 @@ $(function(){
         //Vergleiche jeden angriff auf ein dorf mit allen anderen, ob zu nah beinander
         for(var i=0;i<atts_on_village[v_id].length;i++){
           for(var j=i+1;j<atts_on_village[v_id].length;j++){
-            console.log("first: "+(atts_on_village[v_id][j].start<atts_on_village[v_id][i].end+config.criticaltime*1000)+", second: "+(atts_on_village[v_id][i].start>atts_on_village[v_id][j].start)+", third: "+(atts_on_village[v_id][i].start<atts_on_village[v_id][j].end+config.criticaltime*1000))
+            add_log("first: "+(atts_on_village[v_id][j].start<atts_on_village[v_id][i].end+config.criticaltime*1000)+", second: "+(atts_on_village[v_id][i].start>atts_on_village[v_id][j].start)+", third: "+(atts_on_village[v_id][i].start<atts_on_village[v_id][j].end+config.criticaltime*1000))
             if(atts_on_village[v_id][j].start<atts_on_village[v_id][i].end+config.criticaltime*1000||(atts_on_village[v_id][i].start>atts_on_village[v_id][j].start&&atts_on_village[v_id][i].start<atts_on_village[v_id][j].end+config.criticaltime*1000)){
               //wenn angriffe zu nah sind: zusammenfassen und j-angriff löschen
               atts_on_village[v_id][i].start = atts_on_village[v_id][i].start<atts_on_village[v_id][j].start?atts_on_village[v_id][i].start:atts_on_village[v_id][i].start;
@@ -313,7 +313,7 @@ $(function(){
         }
       }
       storageSet("planned_atts",JSON.stringify(atts_on_village));
-      console.log("finished planning atts!");
+      add_log("finished planning atts!");
     }
     function getPseudoServerTime(){
       //returns time in sek.
@@ -354,7 +354,7 @@ $(function(){
         var cell = $("td",row).eq(1);
         var link = $("a",cell).attr("href");
         var id   = parseInt(link.substring(link.indexOf("village=")+8));
-        console.log("getVillageID: "+id);
+        add_log("getVillageID: "+id);
         return id;
     }
     function getVillageKoords(row){
@@ -385,11 +385,11 @@ $(function(){
         return  hour*3600+minute*60+second;
     }
     function getIncID(row){
-        console.log("getting inc id...");
+        add_log("getting inc id...");
         var cell = $("td",row).eq(0);
         var link = $("a",cell).first().attr("href");
         var id   = parseInt(link.substring(link.indexOf("id=")+3));
-        console.log("got inc id: "+id);
+        add_log("got inc id: "+id);
         return id;
     }
     function init_UI(){
@@ -506,11 +506,24 @@ $(function(){
             storageSet("config",JSON.stringify(config));
           }
     		});
+        var select_debug = $("<select>")
+    		.append($("<option>").text("Aus").attr("value","false"))
+        .append($("<option>").text("An").attr("value","true"))
+        .change(function(){
+          var config = JSON.parse(storageGet("config"));
+          config.debug = $("option:selected",$(this)).val();
+          storageSet("config",JSON.stringify(config));
+          console.log(storageGet("config"))
+        });
+    		$("option[value="+JSON.parse(storageGet("config")).debug+"]",select_debug).prop("selected",true);
 
         $("<tr>").append($("<td>").attr("colspan",2).append($("<span>").attr("style","font-weight: bold;").text("Allgemein:"))).appendTo(settingsTable);
         addRow(
     		$("<span>").text("Einheiten auf dieser Welt: "),
     		select_units);
+        addRow(
+        $("<span>").text("Debugmodus: "),
+    		select_debug);
         $("<tr>").append($("<td>").attr("colspan",2).append($("<span>").attr("style","font-weight: bold;").text("Zeiten:"))).appendTo(settingsTable);
         addRow(
     		$("<span>").text("Die nächsten x Minuten einlesen: "),
@@ -536,7 +549,7 @@ $(function(){
     function toggleRunning(){
         var config = JSON.parse(storageGet("config"));
         config.running = ""+(config.running==="false");
-        console.log("running set to "+config.running);
+        add_log("running set to "+config.running);
         storageSet("config",JSON.stringify(config));
         location.reload();
     }
@@ -546,6 +559,24 @@ $(function(){
         }else{
             return "icon friend offline";
         }
+    }
+    function add_log(text){
+      if(JSON.parse(storageGet("config")).debug==="true"){
+        var prefix = storagePrefix+timeConverter(Date.now())+" - ";
+        console.log(prefix+text);
+      }
+    }
+    function timeConverter(timestamp){
+      var a = new Date(timestamp);
+      var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      var year = a.getFullYear();
+      var month = months[a.getMonth()];
+      var date = a.getDate();
+      var hour = a.getHours();
+      var min = a.getMinutes();
+      var sec = a.getSeconds();
+      var time = date + ' ' + month + ' ' + year + ' ' + hour + ':' + min + ':' + sec ;
+      return time;
     }
     function randomInterval(min,max) {
         return Math.floor(Math.random() * (max - min + 1)) + min;
