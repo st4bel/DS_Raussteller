@@ -164,6 +164,9 @@ $(function(){
     function onConfirm(){
         var config = JSON.parse(storageGet("config"));
         var timestamp = JSON.parse(storageGet("timestamp"))[getPageAttribute("village")];
+        if(timestamp.start>Date.now()&&$("div.error_box").text!=""){
+          window.close();
+        }
         if(timestamp.start<Date.now()||timestamp.start==undefined){//abbruch
             return;
         }
