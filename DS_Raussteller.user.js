@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        DS_Raussteller
 // @namespace   de.die-staemme
-// @version     0.2
+// @version     0.2.2
 // @description Stellt Truppen in angegriffenen Dörfern automatisch raus, und bricht die Angriffe ab.
 // @grant       GM_getValue
 // @grant       GM_setValue
@@ -23,7 +23,7 @@
  * V 0.2: Unabhängigkeit von site reload. Timungen per
  */
 
-var _version = "0.2.1";
+var _version = "0.2.2";
 var _Anleitungslink = "http://blog.ds-kalation.de/?p=68";
 var _UpdateLink = "https://github.com/st4bel/DS_Raussteller/releases";
 
@@ -47,7 +47,7 @@ $(function(){
         storage.setItem(storagePrefix+key,val);
     }
     storageSet("auto_run",storageGet("auto_run","false"));
-    var s = {"0":{"x":598,"y":387}};
+    var s = {"0":{"x":500,"y":500}};
     storageSet("target_list",storageGet("target_list",JSON.stringify(s)));
     storageSet("config",storageGet("config",JSON.stringify(_config)));
     s = {"0":0};
@@ -164,9 +164,6 @@ $(function(){
     function onConfirm(){
         var config = JSON.parse(storageGet("config"));
         var timestamp = JSON.parse(storageGet("timestamp"))[getPageAttribute("village")];
-        if(timestamp.start>Date.now()&&$("div.error_box").text!=""){
-          window.close();
-        }
         if(timestamp.start<Date.now()||timestamp.start==undefined){//abbruch
             return;
         }
@@ -518,6 +515,27 @@ $(function(){
           storageSet("config",JSON.stringify(config));
           console.log(storageGet("config"))
         });
+        var input_target_x = $("<input>")
+        .attr("type", "text")
+        .val(JSON.parse(storageGet("target_list"))["0"]["x"])
+        .on("input", function(){
+          if(parseInt($(this).val())>0) {
+            var target_list = JSON.parse(storageGet("target_list"));
+            target_list["0"]["x"] = $(this).val();
+            storageSet("target_list", target_list)
+          }
+        })
+        var input_target_y = $("<input>")
+        .attr("type", "text")
+        .val(JSON.parse(storageGet("target_list"))["0"]["y"])
+        .on("input", function(){
+          if(parseInt($(this).val())>0) {
+            var target_list = JSON.parse(storageGet("target_list"));
+            target_list["0"]["y"] = $(this).val();
+            storageSet("target_list", target_list)
+          }
+        })
+
     		$("option[value="+JSON.parse(storageGet("config")).debug+"]",select_debug).prop("selected",true);
 
         $("<tr>").append($("<td>").attr("colspan",2).append($("<span>").attr("style","font-weight: bold;").text("Allgemein:"))).appendTo(settingsTable);
@@ -535,8 +553,12 @@ $(function(){
     		$("<span>").text("Feindliche Angriffe, die weniger \nals x Sekunden entfernt sind zusammenfassen:"),
     		input_criticaltime);
         addRow(
-    		$("<span>").text("'Angstsekunden' (<0): "),
+    		$("<span>").text("'Angstsekunden' (>0): "),
     		input_buffertime);
+        addRow(
+          $("<span>").text("Rausstell-Ziel"),
+          $("<div>").append(input_target_x).append(input_target_y)
+        );
 
         //Foot
         $("<button>").text("Start/Stop").click(function(){
