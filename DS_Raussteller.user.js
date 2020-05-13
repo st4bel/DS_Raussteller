@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        DS_Raussteller
 // @namespace   de.die-staemme
-// @version     0.2.2
+// @version     0.3.0-dev
 // @description Stellt Truppen in angegriffenen Dörfern automatisch raus, und bricht die Angriffe ab.
 // @grant       GM_getValue
 // @grant       GM_setValue
@@ -21,9 +21,10 @@
 /*
  * V 0.1: Beginn der Implementierung
  * V 0.2: Unabhängigkeit von site reload. Timungen per
+ * V 0.3: Truppenvorlagen für Rausstellen -> Fakeschutz
  */
 
-var _version = "0.2.2";
+var _version = "0.3.0-dev";
 var _Anleitungslink = "http://blog.ds-kalation.de/?p=68";
 var _UpdateLink = "https://github.com/st4bel/DS_Raussteller/releases";
 
@@ -55,6 +56,7 @@ $(function(){
     storageSet("incs",storageGet("incs","{}"));
     s = {0:[{"koords":{x:0,y:0},"start":0,"end":0,"inc_id":[0],"flag":"false"}]};
     storageSet("planned_atts",storageGet("planned_atts",JSON.stringify(s)));
+    storageSet("template",storageGet("template",""))
 
     add_log("init_UI");
     var autoRun = JSON.parse(storageGet("config")).running==="true";
@@ -66,11 +68,29 @@ $(function(){
             onPlaceSend();
         }else if (getPageAttribute("screen")=="place"&&getPageAttribute("try")=="confirm"){
             onConfirm();
+        }else if (getPageAttribute("screen")=="place"&&getPageAttribute("mode")=="templates"){
+            onTemplateOverview();
         }else if (getPageAttribute("screen")=="info_command"&&getPageAttribute("raus")=="1"){
             onInfoCommand();
         }else if (getPageAttribute("screen")=="place"){
             onPlaceCancel();
         }
+    }
+    function onTemplateOverview(){
+      add_log("onTemplateOverview");
+      var template_id = $("a",$("li.selected",$("#troop_template_list"))).attr("href");
+      var template_name = $("a",$("li.selected",$("#troop_template_list"))).text();
+      if (template_id == ""){
+        //return if in "create Template"
+        return;
+      }
+      //adding template_UI
+      var verify_button = $("#template_button")
+      $("<input>").attr("class", "btn").attr("value","Vorlage für Raussteller benutzen").insertAfter(verify_button)
+      .click(function(){
+        add_log("set template to: "+template_name+template_id)
+        storageSet("template",template_name+template_id);
+      });
     }
     function onOverview(){
         add_log("onOverview");
@@ -558,6 +578,14 @@ $(function(){
         addRow(
           $("<span>").text("Rausstell-Ziel"),
           $("<div>").append(input_target_x).append(input_target_y)
+        );
+        addRow($("<span>").text("Derzeitige Vorlage:"),
+        $("<span>").text(storageGet("template").split("#")[0] != "" ? storageGet("template").split("#")[0] : "Keine Vorlage Ausgewählt")
+        );
+        addRow($("<span>").text("Vorlage zurücksetzen:"),
+        $("<button>").text("Klick!").click(function(){
+          storageSet("template", "");
+        })
         );
 
         //Foot
