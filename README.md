@@ -17,7 +17,7 @@ Weiterhin sollte sichergestellt werden, dass es der Stämme-Seite erlaubt ist, P
 
 [![Github Releases (by Release)](https://img.shields.io/github/downloads/st4bel/ds_raussteller/v0.2.2/total.svg)](https://github.com/st4bel/ds_raussteller/releases/tag/v0.2.2)
 
-[![Github Releases (by Release)](https://img.shields.io/github/downloads/st4bel/ds_raussteller/v0.2.1/total.svg)](https://github.com/st4bel/ds_raussteller/releases/tag/v0.2.1)
+[![Github Releases (by Release)](https://img.shields.io/github/downloads/st4bel/ds_raussteller/v0.2.1-beta/total.svg)](https://github.com/st4bel/ds_raussteller/releases/tag/v0.2.1-beta)
 
-[![Github Releases (by Release)](https://img.shields.io/github/downloads/st4bel/ds_raussteller/v0.2/total.svg)](https://github.com/st4bel/ds_raussteller/releases/tag/v0.2)
+[![Github Releases (by Release)](https://img.shields.io/github/downloads/st4bel/ds_raussteller/v0.2-beta/total.svg)](https://github.com/st4bel/ds_raussteller/releases/tag/v0.2-beta)
 
