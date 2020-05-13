@@ -1,6 +1,6 @@
 # DS-Raussteller
 
-[![Github Releases (by Release)](https://img.shields.io/github/downloads/st4bel/ds_raussteller/v0.3.0/total.svg)](https://github.com/st4bel/ds_raussteller/releases/tag/v0.6.0)
+[![Github Releases (by Release)](https://img.shields.io/github/downloads/st4bel/ds_raussteller/v0.3.0/total.svg)](https://github.com/st4bel/ds_raussteller/releases/tag/v0.3.0)
 
 ## Installation und Vorbereitung
 
@@ -13,3 +13,11 @@ Zum Starten des Scripts im Scriptmenü auf Start/Stop klicken, bis die "Lampe" g
 
 Weiterhin sollte sichergestellt werden, dass es der Stämme-Seite erlaubt ist, Pop-Ups zu öffnen. (Entweder googlen oder sich einmal selbst angreifen, schauen ob sich ein neuer Tab öffnet, wenn nicht im Browser oben in der angezeigten Leiste auf "Erlauben" klicken)
 ![template](static/popup.png)
+
+
+[![Github Releases (by Release)](https://img.shields.io/github/downloads/st4bel/ds_raussteller/v0.2.2/total.svg)](https://github.com/st4bel/ds_raussteller/releases/tag/v0.2.2)
+
+[![Github Releases (by Release)](https://img.shields.io/github/downloads/st4bel/ds_raussteller/v0.2.1/total.svg)](https://github.com/st4bel/ds_raussteller/releases/tag/v0.2.1)
+
+[![Github Releases (by Release)](https://img.shields.io/github/downloads/st4bel/ds_raussteller/v0.2/total.svg)](https://github.com/st4bel/ds_raussteller/releases/tag/v0.2)
+
