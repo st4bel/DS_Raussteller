@@ -1,6 +1,6 @@
 # DS-Raussteller
 
-[![Github Releases (by Release)](https://img.shields.io/github/downloads/st4bel/ds_raussteller/v0.3.0/total.svg)](https://github.com/st4bel/ds_raussteller/releases/tag/v0.3.0)
+[![Github Releases (by Release)](https://img.shields.io/github/downloads/st4bel/ds_raussteller/v0.3.1/total.svg)](https://github.com/st4bel/ds_raussteller/releases/tag/v0.3.1)
 
 ## Installation und Vorbereitung
 
