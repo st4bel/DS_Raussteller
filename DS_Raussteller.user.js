@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        DS_Raussteller
 // @namespace   de.die-staemme
-// @version     0.3.0-dev
+// @version     0.3.0
 // @description Stellt Truppen in angegriffenen Dörfern automatisch raus, und bricht die Angriffe ab.
 // @grant       GM_getValue
 // @grant       GM_setValue
@@ -24,7 +24,7 @@
  * V 0.3: Truppenvorlagen für Rausstellen -> Fakeschutz
  */
 
-var _version = "0.3.0-dev";
+var _version = "0.3.0";
 var _Anleitungslink = "http://blog.ds-kalation.de/?p=68";
 var _UpdateLink = "https://github.com/st4bel/DS_Raussteller/releases";
 
@@ -38,7 +38,7 @@ var _units = {
 $(function(){
 
     var storage = localStorage;
-    var storagePrefix="raussteller_v0.2+_";
+    var storagePrefix="raussteller_v0.3.0+_";
     //Speicherfunktionen
     function storageGet(key,defaultValue) {
         var value= storage.getItem(storagePrefix+key);
@@ -81,7 +81,7 @@ $(function(){
       add_log("onTemplateOverview");
       //adding template_UI
       var verify_button = $("#template_button")
-      $("<input>").attr("class", "btn").attr("value","Vorlage für Raussteller benutzen").insertAfter(verify_button)
+      $("<input>").attr("class", "btn").attr("value","Für Raussteller benutzen").insertAfter(verify_button)
       .click(function(){
         var template_id = $("a",$("li.selected",$("#troop_template_list"))).attr("href");
         var template_name = $("a",$("li.selected",$("#troop_template_list"))).text();
@@ -152,11 +152,25 @@ $(function(){
     }
     function onPlaceSend(){//TODO unterscheidung alle, keine, einige truppen
         add_log("trying to evacuate all units..");
-        var form = $("#command-data-form");
-        var config = JSON.parse(storageGet("config"));
-        var units = _units[config.units]; //shorter...
-        for(var i in units){
-            $("#unit_input_"+units[i]).attr("value",$("#unit_input_"+units[i]).attr("data-all-count"));
+        var template = storageGet("template")
+        if (template != ""){
+          add_log("template "+template+" set.")
+          try{
+            TroopTemplates.useTemplate(template.split("#")[1])
+          }
+          catch(err){
+            add_log("couldnt set template. removing template")
+            storageSet("template", "");
+            onPlaceSend();
+          }
+        }else{
+          add_log("no template set. evacuate all units")
+          var form = $("#command-data-form");
+          var config = JSON.parse(storageGet("config"));
+          var units = _units[config.units]; //shorter...
+          for(var i in units){
+              $("#unit_input_"+units[i]).attr("value",$("#unit_input_"+units[i]).attr("data-all-count"));
+          }
         }
         add_log("click");
         setTimeout(function(){
