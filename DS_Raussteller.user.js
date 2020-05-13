@@ -68,26 +68,28 @@ $(function(){
             onPlaceSend();
         }else if (getPageAttribute("screen")=="place"&&getPageAttribute("try")=="confirm"){
             onConfirm();
-        }else if (getPageAttribute("screen")=="place"&&getPageAttribute("mode")=="templates"){
-            onTemplateOverview();
         }else if (getPageAttribute("screen")=="info_command"&&getPageAttribute("raus")=="1"){
             onInfoCommand();
         }else if (getPageAttribute("screen")=="place"){
             onPlaceCancel();
         }
     }
+    if (getPageAttribute("screen")=="place"&&getPageAttribute("mode")=="templates"){
+      onTemplateOverview();
+    }
     function onTemplateOverview(){
       add_log("onTemplateOverview");
-      var template_id = $("a",$("li.selected",$("#troop_template_list"))).attr("href");
-      var template_name = $("a",$("li.selected",$("#troop_template_list"))).text();
-      if (template_id == ""){
-        //return if in "create Template"
-        return;
-      }
       //adding template_UI
       var verify_button = $("#template_button")
       $("<input>").attr("class", "btn").attr("value","Vorlage für Raussteller benutzen").insertAfter(verify_button)
       .click(function(){
+        var template_id = $("a",$("li.selected",$("#troop_template_list"))).attr("href");
+        var template_name = $("a",$("li.selected",$("#troop_template_list"))).text();
+        if (template_id.split("#")[1] == ""){
+          //return if in "create Template"
+          add_log("not in viable template")
+          return;
+        }
         add_log("set template to: "+template_name+template_id)
         storageSet("template",template_name+template_id);
       });
