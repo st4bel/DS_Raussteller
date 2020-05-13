@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        DS_Raussteller
 // @namespace   de.die-staemme
-// @version     0.3.0
+// @version     0.3.1
 // @description Stellt Truppen in angegriffenen Dörfern automatisch raus, und bricht die Angriffe ab.
 // @grant       GM_getValue
 // @grant       GM_setValue
@@ -24,7 +24,7 @@
  * V 0.3: Truppenvorlagen für Rausstellen -> Fakeschutz
  */
 
-var _version = "0.3.0";
+var _version = "0.3.1";
 var _Anleitungslink = "http://blog.ds-kalation.de/?p=68";
 var _UpdateLink = "https://github.com/st4bel/DS_Raussteller/releases";
 
@@ -38,7 +38,7 @@ var _units = {
 $(function(){
 
     var storage = localStorage;
-    var storagePrefix="raussteller_v0.3.0+_";
+    var storagePrefix="raussteller_v0.3.1+_";
     //Speicherfunktionen
     function storageGet(key,defaultValue) {
         var value= storage.getItem(storagePrefix+key);
@@ -558,7 +558,7 @@ $(function(){
           if(parseInt($(this).val())>0) {
             var target_list = JSON.parse(storageGet("target_list"));
             target_list["0"]["x"] = $(this).val();
-            storageSet("target_list", target_list)
+            storageSet("target_list", JSON.stringify(target_list))
           }
         })
         var input_target_y = $("<input>")
@@ -568,7 +568,7 @@ $(function(){
           if(parseInt($(this).val())>0) {
             var target_list = JSON.parse(storageGet("target_list"));
             target_list["0"]["y"] = $(this).val();
-            storageSet("target_list", target_list)
+            storageSet("target_list", JSON.stringify(target_list))
           }
         })
 
