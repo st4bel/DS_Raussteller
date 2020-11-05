@@ -25,7 +25,7 @@ Weiterhin sollte sichergestellt werden, dass es der Stämme-Seite erlaubt ist, P
 
 ## Adaption for International Versions
 
-First download and install Tampermonkey (or similar) as extension for your Browser. Go to ![releases](https://github.com/st4bel/DS_Raussteller/releases/latest) and install the the `*.user.js into` Tampermonkey. To adapt the script for your Version of "Die Stämme" or "Tribalwars" you have to change a few lines of code:
+First download and install Tampermonkey (or similar) as extension for your Browser. Go to ![releases](https://github.com/st4bel/DS_Raussteller/releases/latest) and install the the `*.user.js` into Tampermonkey. To adapt the script for your Version of "Die Stämme" or "Tribalwars" you have to change a few lines of code:
 
 In the first few lines you have to exchange "die-staemme.de" with the domain of your Version. E.g.:
 
