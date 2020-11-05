@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        DS_Raussteller
 // @namespace   de.die-staemme
-// @version     0.3.1
+// @version     0.3.2
 // @description Stellt Truppen in angegriffenen Dörfern automatisch raus, und bricht die Angriffe ab.
 // @grant       GM_getValue
 // @grant       GM_setValue
@@ -24,7 +24,7 @@
  * V 0.3: Truppenvorlagen für Rausstellen -> Fakeschutz
  */
 
-var _version = "0.3.1";
+var _version = "0.3.2";
 var _Anleitungslink = "http://blog.ds-kalation.de/?p=68";
 var _UpdateLink = "https://github.com/st4bel/DS_Raussteller/releases";
 
@@ -225,7 +225,7 @@ $(function(){
         var table = $("#content_value");
         var cancel_link;
         $("a",table).each(function(){
-            if($(this).text().indexOf("abbrechen")!=-1){
+            if($(this).attr("href").indexOf("action=cancel")!=-1){
                 cancel_link = $(this).attr("href")+"&raus=2"; //raus=2 hinweiß zum fenster schließen
             }
         });
