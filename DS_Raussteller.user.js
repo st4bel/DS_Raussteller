@@ -25,7 +25,7 @@
  * V 0.3.3: UV support
  */
 
-var _version = "0.3.2";
+var _version = "0.3.3";
 var _Anleitungslink = "http://blog.ds-kalation.de/?p=68";
 var _UpdateLink = "https://github.com/st4bel/DS_Raussteller/releases";
 
@@ -129,7 +129,7 @@ $(function(){
                   // if UV
                   var uv = "";
                   if(getPageAttribute("t")!="0"){
-                    uv = "t=" + getPageAttribute("t");
+                    uv = "t=" + getPageAttribute("t") + "&";
                   }
 
                   var link = "/game.php?+"+uv+"+village="+v_id+"&screen=place&x="+planned_atts[v_id][i].koords.x+"&y="+planned_atts[v_id][i].koords.y+"&raus=1";
