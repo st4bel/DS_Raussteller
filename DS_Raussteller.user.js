@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        DS_Raussteller
 // @namespace   de.die-staemme
-// @version     0.3.2
+// @version     0.3.3
 // @description Stellt Truppen in angegriffenen Dörfern automatisch raus, und bricht die Angriffe ab.
 // @grant       GM_getValue
 // @grant       GM_setValue
@@ -22,6 +22,7 @@
  * V 0.1: Beginn der Implementierung
  * V 0.2: Unabhängigkeit von site reload. Timungen per
  * V 0.3: Truppenvorlagen für Rausstellen -> Fakeschutz
+ * V 0.3.3: UV support
  */
 
 var _version = "0.3.2";
@@ -124,8 +125,14 @@ $(function(){
                   var timestamp = JSON.parse(storageGet("timestamp"));
                   timestamp[v_id] = {"start":(planned_atts[v_id][i].start-config.frontbuffer*1000),"cancel":(Math.floor((planned_atts[v_id][i].start-config.frontbuffer*1000+planned_atts[v_id][i].end+config.backbuffer*1000)/2)+1000)};
                   storageSet("timestamp",JSON.stringify(timestamp));
+                  
+                  // if UV
+                  var uv = "";
+                  if(getPageAttribute("t")!="0"){
+                    uv = "t=" + getPageAttribute("t");
+                  }
 
-                  var link = "/game.php?village="+v_id+"&screen=place&x="+planned_atts[v_id][i].koords.x+"&y="+planned_atts[v_id][i].koords.y+"&raus=1";
+                  var link = "/game.php?+"+uv+"+village="+v_id+"&screen=place&x="+planned_atts[v_id][i].koords.x+"&y="+planned_atts[v_id][i].koords.y+"&raus=1";
 				          window.open(link, '_blank');
                   //angriff aus planned_atts löschen!
                   planned_atts[v_id][i].flag="true"; //gibt an, dass dieser angriff bereits geschickt wurde..
