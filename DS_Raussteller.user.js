@@ -224,7 +224,7 @@ $(function(){
               waitToSend();
             },config.frontbuffer*250);
           }else{//Zeit ist ready
-            $("#troop_confirm_go").click();
+            $("#troop_confirm_submit").click();
           }
         }
     }
